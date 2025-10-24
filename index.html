@@ -214,9 +214,20 @@
                         }) : 'Data inválida';
 
                     let abbreviatedType = event.type;
-                    if (event.type === 'League Challenge') abbreviatedType = 'Challenge';
-                    if (event.type === 'League Cup') abbreviatedType = 'Cup';
-                    const typeClass = event.type === 'League Cup' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+                    let fullTypeName = event.type;
+                    let typeClass = 'bg-gray-100 text-gray-800'; // Default
+
+                    if (event.type === 'League Challenge') {
+                        abbreviatedType = 'Challenge';
+                        typeClass = 'bg-blue-100 text-blue-800';
+                    } else if (event.type === 'League Cup') {
+                        abbreviatedType = 'Cup';
+                        typeClass = 'bg-red-100 text-red-800';
+                    } else if (event.type.toLowerCase().includes('prerelease')) {
+                        abbreviatedType = 'Pré Release';
+                        fullTypeName = 'Pré Release'; // Manter consistência
+                        typeClass = 'bg-green-100 text-green-800';
+                    }
 
                     row.innerHTML = `
                         <td class="hidden sm:table-cell px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
@@ -227,7 +238,7 @@
                                 ${abbreviatedType}
                             </span>
                              <span class="hidden sm:inline-flex px-2 text-xs leading-5 font-semibold rounded-full ${typeClass}">
-                                ${event.type}
+                                ${fullTypeName}
                             </span>
                         </td>
                         <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${formattedDate}</td>
@@ -265,7 +276,13 @@
                 types.forEach(type => {
                     const option = document.createElement('option');
                     option.value = type;
-                    option.textContent = type;
+                    
+                    if (type.toLowerCase().includes('prerelease')) {
+                        option.textContent = 'Pré Release';
+                    } else {
+                        option.textContent = type;
+                    }
+
                     typeFilter.appendChild(option);
                 });
 
@@ -438,4 +455,5 @@
     </script>
 </body>
 </html>
+
 
