@@ -64,6 +64,22 @@
             opacity: 1;
             color: #e63946;
         }
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #e63946;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-pkmn-bg text-gray-800">
@@ -75,14 +91,18 @@
         </header>
 
         <main class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
-            <!-- File Upload Section -->
-            <div id="file-upload-section" class="mb-6 p-6 border-2 border-dashed border-pkmn-light-blue rounded-lg text-center bg-white">
-                <label for="csv-file-input" class="cursor-pointer text-pkmn-blue hover:text-blue-800 font-medium transition">
-                    <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V16a4 4 0 01-4 4H7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 9h4m-4 4h4m-4 4h4"></path></svg>
-                    Clique aqui para carregar o arquivo <span class="font-bold">export_events.csv</span>
-                </label>
-                <input type="file" id="csv-file-input" class="hidden" accept=".csv">
-                <p id="file-name-span" class="text-sm text-gray-500 mt-2"></p>
+            <!-- API Status Section -->
+            <div id="api-status-section" class="mb-6 p-4 border-l-4 border-pkmn-blue bg-blue-50 rounded-r-lg flex items-center justify-between">
+                <div class="flex items-center">
+                    <div id="loading-spinner" class="loader"></div>
+                    <div>
+                        <p id="status-message" class="font-bold text-pkmn-blue">Conectando à PokéData API...</p>
+                        <p id="status-subtext" class="text-xs text-gray-500">Buscando eventos recentes.</p>
+                    </div>
+                </div>
+                <button id="retry-button" class="hidden px-4 py-2 bg-pkmn-red text-white text-sm font-bold rounded hover:bg-red-700 transition">
+                    Tentar Novamente
+                </button>
             </div>
 
             <!-- Filter and Search Controls -->
@@ -112,7 +132,7 @@
             </div>
 
             <!-- Events Table -->
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-pkmn-header-bg">
                         <tr>
@@ -127,8 +147,8 @@
                         <!-- Rows will be dynamically inserted here -->
                     </tbody>
                 </table>
-                 <div id="no-results" class="text-center py-8 text-gray-500">
-                    <p>Procurando export_events.csv... Se não for encontrado, clique na área acima para carregar manualmente.</p>
+                 <div id="no-results" class="text-center py-8 text-gray-500 hidden">
+                    <p>Nenhum evento encontrado.</p>
                 </div>
             </div>
         </main>
@@ -153,6 +173,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Configuration ---
+            const API_URL = 'https://pokedata.ovh/events/api/_tcg/cups/challenges/pre/_country/BR'; 
+
             // --- DOM Elements ---
             const tableBody = document.getElementById('events-table-body');
             const searchInput = document.getElementById('search-input');
@@ -165,29 +188,111 @@
             const detailsName = document.getElementById('details-name');
             const detailsContent = document.getElementById('details-content');
             const noResultsDiv = document.getElementById('no-results');
-            const fileInput = document.getElementById('csv-file-input');
-            const fileNameSpan = document.getElementById('file-name-span');
-            const fileUploadSection = document.getElementById('file-upload-section');
+            
+            // Status Elements
+            const statusMessage = document.getElementById('status-message');
+            const statusSubtext = document.getElementById('status-subtext');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const retryButton = document.getElementById('retry-button');
+            const apiStatusSection = document.getElementById('api-status-section');
 
             let allEvents = [];
             let currentSort = { key: 'when', direction: 'asc' };
 
-            // --- Data Parsing ---
-            function parseCSV(data) {
-                const rows = data.trim().split('\n');
-                if (rows.length < 2) throw new Error("CSV file is empty or has only a header.");
-                const headers = rows[0].split(';');
-                return rows.slice(1).map(row => {
-                    const values = row.split(/;(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val.replace(/"/g, '').trim());
-                    if (values.length !== headers.length) {
-                         console.warn("Row with mismatching column count:", row);
-                         return null;
+            // --- API Handling ---
+            async function fetchEventsFromAPI() {
+                setLoadingState(true);
+                let data;
+                
+                try {
+                    // Tentativa 1: Fetch direto
+                    try {
+                        console.log("Tentando conexão direta...");
+                        const response = await fetch(API_URL);
+                        if (!response.ok) throw new Error('Erro na conexão direta');
+                        data = await response.json();
+                    } catch (directError) {
+                        console.warn("Conexão direta falhou (provavelmente CORS), tentando proxy...", directError);
+                        
+                        // Tentativa 2: Fetch via Proxy (para contornar CORS em navegadores)
+                        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(API_URL);
+                        const proxyResponse = await fetch(proxyUrl);
+                        if (!proxyResponse.ok) throw new Error('Erro na conexão via proxy');
+                        data = await proxyResponse.json();
                     }
-                    return headers.reduce((obj, header, i) => {
-                        obj[header.trim()] = values[i];
-                        return obj;
-                    }, {});
-                }).filter(Boolean);
+                    
+                    // Normalização básica caso a API retorne chaves ligeiramente diferentes
+                    let eventsArray = Array.isArray(data) ? data : (data.events || []);
+
+                    if (!eventsArray || eventsArray.length === 0) {
+                        throw new Error("A API retornou uma lista vazia de eventos no Brasil.");
+                    }
+
+                    // FILTRO ROBUSTO: Manter apenas eventos de São Paulo
+                    allEvents = eventsArray.filter(event => {
+                         if (!event) return false;
+
+                         // Normalizar strings para comparação (upper case, sem espaços extras)
+                         const state = (event.state || '').toString().trim().toUpperCase();
+                         const city = (event.city || '').toString().trim().toUpperCase();
+                         
+                         // Função auxiliar para remover acentos (ex: SÃO -> SAO)
+                         const removeAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                         const cleanState = removeAccents(state);
+                         const cleanCity = removeAccents(city);
+
+                         // Verifica variações comuns
+                         return cleanState === 'SP' || 
+                                cleanState.includes('SAO PAULO') || 
+                                cleanCity.includes('SAO PAULO');
+                    });
+
+                    setLoadingState(false, true);
+                    
+                    if (allEvents.length === 0) {
+                        // Se conectou mas o filtro removeu tudo
+                        console.warn("Eventos carregados do Brasil, mas nenhum correspondeu ao filtro 'São Paulo'.");
+                        noResultsDiv.classList.remove('hidden');
+                        noResultsDiv.querySelector('p').textContent = "Conectado à API, mas nenhum evento encontrado em São Paulo no momento.";
+                    } else {
+                        populateFilters(allEvents);
+                        filterAndSortEvents();
+                    }
+
+                } catch (error) {
+                    console.error("Falha crítica ao buscar API:", error);
+                    setLoadingState(false, false, error.message);
+                }
+            }
+
+            function setLoadingState(isLoading, isSuccess = false, errorMessage = '') {
+                if (isLoading) {
+                    loadingSpinner.style.display = 'inline-block';
+                    retryButton.classList.add('hidden');
+                    statusMessage.textContent = "Conectando à PokéData API...";
+                    statusMessage.className = "font-bold text-pkmn-blue";
+                    statusSubtext.textContent = "Buscando eventos recentes (Tentando conexão direta e proxy)...";
+                    apiStatusSection.className = "mb-6 p-4 border-l-4 border-pkmn-blue bg-blue-50 rounded-r-lg flex items-center justify-between";
+                } else if (isSuccess) {
+                    loadingSpinner.style.display = 'none';
+                    statusMessage.textContent = "Dados Atualizados!";
+                    statusMessage.className = "font-bold text-green-700";
+                    statusSubtext.textContent = `Carregados ${allEvents.length} eventos em São Paulo.`;
+                    apiStatusSection.className = "mb-6 p-4 border-l-4 border-green-500 bg-green-50 rounded-r-lg flex items-center justify-between";
+                    // Esconde a barra de status após 5 segundos se for sucesso
+                    setTimeout(() => {
+                        apiStatusSection.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    // Erro
+                    loadingSpinner.style.display = 'none';
+                    retryButton.classList.remove('hidden');
+                    statusMessage.textContent = "Erro ao carregar dados";
+                    statusMessage.className = "font-bold text-red-700";
+                    statusSubtext.textContent = `Não foi possível carregar os dados. Detalhe: ${errorMessage}`;
+                    apiStatusSection.className = "mb-6 p-4 border-l-4 border-pkmn-red bg-red-50 rounded-r-lg flex items-center justify-between";
+                }
             }
 
             // --- UI Rendering ---
@@ -195,7 +300,10 @@
                 tableBody.innerHTML = '';
                 if (events.length === 0) {
                     noResultsDiv.classList.remove('hidden');
-                    noResultsDiv.querySelector('p').textContent = "Nenhum resultado encontrado para os filtros aplicados.";
+                    // Mensagem específica dependendo se temos dados carregados mas filtrados pela busca
+                    if (allEvents.length > 0) {
+                         noResultsDiv.querySelector('p').textContent = "Nenhum resultado encontrado para os filtros aplicados.";
+                    }
                 } else {
                     noResultsDiv.classList.add('hidden');
                 }
@@ -213,17 +321,17 @@
                             timeZone: 'UTC'
                         }) : 'Data inválida';
 
-                    let abbreviatedType = event.type;
-                    let fullTypeName = event.type;
+                    let abbreviatedType = event.type || 'Evento';
+                    let fullTypeName = event.type || 'Evento';
                     let typeClass = 'bg-gray-100 text-gray-800'; // Default
 
-                    if (event.type === 'League Challenge') {
+                    if (fullTypeName === 'League Challenge') {
                         abbreviatedType = 'Challenge';
                         typeClass = 'bg-blue-100 text-blue-800';
-                    } else if (event.type === 'League Cup') {
+                    } else if (fullTypeName === 'League Cup') {
                         abbreviatedType = 'Cup';
                         typeClass = 'bg-red-100 text-red-800';
-                    } else if (event.type.toLowerCase().includes('prerelease')) {
+                    } else if (fullTypeName && fullTypeName.toLowerCase().includes('prerelease')) {
                         abbreviatedType = 'Pré Release';
                         fullTypeName = 'Pré Release'; // Manter consistência
                         typeClass = 'bg-green-100 text-green-800';
@@ -231,7 +339,7 @@
 
                     row.innerHTML = `
                         <td class="hidden sm:table-cell px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
-                            <div class="font-medium text-gray-900">${event.name}</div>
+                            <div class="font-medium text-gray-900">${event.name || 'Sem Nome'}</div>
                         </td>
                         <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
                              <span class="sm:hidden px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${typeClass}">
@@ -242,38 +350,29 @@
                             </span>
                         </td>
                         <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${formattedDate}</td>
-                        <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.shop}</td>
-                        <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.city}</td>
+                        <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.shop || '-'}</td>
+                        <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.city || '-'}</td>
                     `;
                     row.addEventListener('click', () => showDetails(event));
                     tableBody.appendChild(row);
                 });
             }
-            
-            function processAndDisplayData(csvText) {
-                try {
-                    allEvents = parseCSV(csvText);
-                    populateFilters(allEvents);
-                    document.querySelector(`th[data-sort="${currentSort.key}"]`).setAttribute('data-sort-direction', currentSort.direction);
-                    filterAndSortEvents();
-                } catch (error) {
-                    console.error("Error parsing CSV:", error);
-                    noResultsDiv.querySelector('p').textContent = "Erro ao ler o arquivo. Verifique se o formato CSV está correto e tente novamente.";
-                    noResultsDiv.classList.remove('hidden');
-                    tableBody.innerHTML = '';
-                }
-            }
-
 
             function populateFilters(events) {
+                // Preserve current selections if possible, or reset to 'all'
+                const currentType = typeFilter.value;
+                const currentCity = cityFilter.value;
+                const currentMonth = monthFilter.value;
+
                 typeFilter.innerHTML = '<option value="all">Todos os Tipos</option>';
                 cityFilter.innerHTML = '<option value="all">Todas as Cidades</option>';
                 monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
                 
                 const types = [...new Set(events.map(e => e.type))];
-                const cities = [...new Set(events.map(e => e.city))].sort((a, b) => a.localeCompare(b));
+                const cities = [...new Set(events.map(e => e.city))].sort((a, b) => (a || '').localeCompare(b || ''));
 
                 types.forEach(type => {
+                    if(!type) return;
                     const option = document.createElement('option');
                     option.value = type;
                     
@@ -307,11 +406,16 @@
                     option.textContent = monthNames[monthIndex];
                     monthFilter.appendChild(option);
                 });
+                
+                // Restore values if they still exist in the new options
+                if ([...typeFilter.options].some(o => o.value === currentType)) typeFilter.value = currentType;
+                if ([...cityFilter.options].some(o => o.value === currentCity)) cityFilter.value = currentCity;
+                if ([...monthFilter.options].some(o => o.value === currentMonth)) monthFilter.value = currentMonth;
             }
 
             // --- Details Panel ---
             function showDetails(event) {
-                detailsName.textContent = event.name;
+                detailsName.textContent = event.name || 'Detalhes do Evento';
                 
                 const whenDate = new Date(event.when);
                 const formattedDate = !isNaN(whenDate) ? whenDate.toLocaleString('pt-br', { dateStyle: 'full', timeStyle: 'short', timeZone: 'UTC' }) : 'Data inválida';
@@ -327,11 +431,11 @@
                 }
 
                 detailsContent.innerHTML = `
-                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Tipo:</strong> ${event.type}</p>
-                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Loja:</strong> ${event.shop}</p>
+                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Tipo:</strong> ${event.type || '-'}</p>
+                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Loja:</strong> ${event.shop || '-'}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Data:</strong> ${formattedDate}</p>
-                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Endereço:</strong> ${event.street_adress}</p>
-                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Cidade:</strong> ${event.city}, ${event.state}</p>
+                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Endereço:</strong> ${event.street_adress || 'Não informado'}</p>
+                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Cidade:</strong> ${event.city || '-'}, ${event.state || ''}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">CEP:</strong> ${event.postal_code || 'N/A'}</p>
                     <div class="mt-6 space-y-2">
                         <a href="https://www.google.com/maps?q=${event.latitude},${event.longitude}" target="_blank" rel="noopener noreferrer" 
@@ -380,6 +484,9 @@
                     if (currentSort.key === 'when') {
                         valA = new Date(valA).getTime();
                         valB = new Date(valB).getTime();
+                    } else if (typeof valA === 'string') {
+                        valA = valA.toLowerCase();
+                        valB = valB.toLowerCase();
                     }
 
                     if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
@@ -411,37 +518,7 @@
                 filterAndSortEvents();
             }
             
-            // --- File Handlers ---
-            function handleFileSelect(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                fileNameSpan.textContent = `Arquivo: ${file.name}`;
-                const reader = new FileReader();
-                
-                reader.onload = event => {
-                    processAndDisplayData(event.target.result);
-                };
-                reader.readAsText(file);
-            }
-            
-            async function loadInitialData() {
-                try {
-                    const response = await fetch('export_events.csv');
-                    if (!response.ok) {
-                        throw new Error('Arquivo export_events.csv não encontrado. Carregue-o manualmente.');
-                    }
-                    const csvText = await response.text();
-                    fileUploadSection.classList.add('hidden');
-                    processAndDisplayData(csvText);
-                } catch (error) {
-                    console.warn(error.message);
-                    noResultsDiv.querySelector('p').textContent = "Por favor, carregue um arquivo export_events.csv para visualizar os dados.";
-                }
-            }
-
             // --- Initial Setup & Event Listeners ---
-            fileInput.addEventListener('change', handleFileSelect);
             searchInput.addEventListener('input', filterAndSortEvents);
             typeFilter.addEventListener('change', filterAndSortEvents);
             cityFilter.addEventListener('change', filterAndSortEvents);
@@ -449,11 +526,11 @@
             closeDetailsButton.addEventListener('click', hideDetails);
             detailsOverlay.addEventListener('click', hideDetails);
             document.querySelector('thead').addEventListener('click', handleSort);
+            retryButton.addEventListener('click', fetchEventsFromAPI);
             
-            loadInitialData();
+            // Start Load
+            fetchEventsFromAPI();
         });
     </script>
 </body>
 </html>
-
-
