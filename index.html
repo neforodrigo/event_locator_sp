@@ -318,7 +318,7 @@
                             day: '2-digit', 
                             month: '2-digit', 
                             year: 'numeric',
-                            timeZone: 'UTC'
+                            timeZone: 'America/Sao_Paulo'
                         }) : 'Data inválida';
 
                     let abbreviatedType = event.type || 'Evento';
@@ -418,7 +418,7 @@
                 detailsName.textContent = event.name || 'Detalhes do Evento';
                 
                 const whenDate = new Date(event.when);
-                const formattedDate = !isNaN(whenDate) ? whenDate.toLocaleString('pt-br', { dateStyle: 'full', timeStyle: 'short', timeZone: 'UTC' }) : 'Data inválida';
+                const formattedDate = !isNaN(whenDate) ? whenDate.toLocaleString('pt-br', { dateStyle: 'full', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }) : 'Data inválida';
 
                 // Tratamento robusto para encontrar o endereço
                 const address = event.address || event.street_address || event.street_adress || 'Endereço não informado';
