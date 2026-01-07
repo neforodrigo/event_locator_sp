@@ -426,7 +426,14 @@
 
                 let pokemonEventLinkHTML = '';
                 if (event.pokemon_url && event.pokemon_url.trim() !== '') {
-                    const officialEventUrl = `https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/${event.pokemon_url}`;
+                    // Correção: Usa URL base oficial de eventos Play! Pokémon
+                    let officialEventUrl = event.pokemon_url;
+                    
+                    // Se a URL não começar com http, assume que é um ID e concatena na base URL correta
+                    if (!officialEventUrl.startsWith('http')) {
+                        officialEventUrl = `https://www.pokemon.com/us/play-pokemon/pokemon-events/${event.pokemon_url}`;
+                    }
+
                     pokemonEventLinkHTML = `
                         <a href="${officialEventUrl}" target="_blank" rel="noopener noreferrer" 
                            class="w-full text-center inline-block bg-pkmn-blue text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-800 transition">
