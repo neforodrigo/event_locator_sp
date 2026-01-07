@@ -422,7 +422,6 @@
 
                 // Tratamento robusto para encontrar o endereço
                 const address = event.address || event.street_address || event.street_adress || 'Endereço não informado';
-                const postalCode = event.postal_code || event.zip_code || event.zip || 'N/A';
 
                 let pokemonEventLinkHTML = '';
                 if (event.pokemon_url && event.pokemon_url.trim() !== '') {
@@ -447,7 +446,6 @@
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Data:</strong> ${formattedDate}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Endereço:</strong> ${address}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Cidade:</strong> ${event.city || '-'}, ${event.state || ''}</p>
-                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">CEP:</strong> ${postalCode}</p>
                     <div class="mt-6 space-y-2">
                         <a href="https://www.google.com/maps?q=${event.latitude},${event.longitude}" target="_blank" rel="noopener noreferrer" 
                            class="w-full text-center inline-block bg-pkmn-red text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition">
