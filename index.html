@@ -420,6 +420,10 @@
                 const whenDate = new Date(event.when);
                 const formattedDate = !isNaN(whenDate) ? whenDate.toLocaleString('pt-br', { dateStyle: 'full', timeStyle: 'short', timeZone: 'UTC' }) : 'Data inválida';
 
+                // Tratamento robusto para encontrar o endereço
+                const address = event.address || event.street_address || event.street_adress || 'Endereço não informado';
+                const postalCode = event.postal_code || event.zip_code || event.zip || 'N/A';
+
                 let pokemonEventLinkHTML = '';
                 if (event.pokemon_url && event.pokemon_url.trim() !== '') {
                     const officialEventUrl = `https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/${event.pokemon_url}`;
@@ -434,9 +438,9 @@
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Tipo:</strong> ${event.type || '-'}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Loja:</strong> ${event.shop || '-'}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Data:</strong> ${formattedDate}</p>
-                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Endereço:</strong> ${event.street_adress || 'Não informado'}</p>
+                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">Endereço:</strong> ${address}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Cidade:</strong> ${event.city || '-'}, ${event.state || ''}</p>
-                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">CEP:</strong> ${event.postal_code || 'N/A'}</p>
+                    <p><strong class="font-semibold text-gray-600 w-28 inline-block">CEP:</strong> ${postalCode}</p>
                     <div class="mt-6 space-y-2">
                         <a href="https://www.google.com/maps?q=${event.latitude},${event.longitude}" target="_blank" rel="noopener noreferrer" 
                            class="w-full text-center inline-block bg-pkmn-red text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition">
