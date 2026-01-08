@@ -80,9 +80,15 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .poke-btn {
+            transition: transform 0.2s;
+        }
+        .poke-btn:active {
+            transform: scale(1.2) rotate(20deg);
+        }
     </style>
 </head>
-<body class="bg-pkmn-bg text-gray-800">
+<body class="bg-pkmn-bg text-gray-800 pb-20">
 
     <div class="container mx-auto p-2 sm:p-4 md:p-8">
         <header class="text-center mb-6 p-3 sm:p-6 bg-pkmn-header-bg rounded-xl border-b-4 border-pkmn-light-blue">
@@ -90,7 +96,7 @@
             <p class="text-xs sm:text-md text-gray-600 mt-1 sm:mt-3 tracking-wider">Torneios de Pokémon TCG em São Paulo</p>
         </header>
 
-        <main class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
+        <main class="bg-white rounded-xl shadow-lg p-3 sm:p-6 relative">
             <!-- API Status Section -->
             <div id="api-status-section" class="mb-6 p-4 border-l-4 border-pkmn-blue bg-blue-50 rounded-r-lg flex items-center justify-between">
                 <div class="flex items-center">
@@ -106,10 +112,24 @@
             </div>
 
             <!-- Filter and Search Controls -->
-            <div class="mb-4">
-                <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Pesquisar</label>
-                <input type="text" id="search-input" placeholder="Buscar por nome, cidade, loja..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition">
+            <div class="mb-4 flex flex-col sm:flex-row gap-2 items-center">
+                <div class="w-full flex-grow">
+                    <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Pesquisar</label>
+                    <input type="text" id="search-input" placeholder="Buscar por nome, cidade, loja..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition">
+                </div>
+                <div class="w-full sm:w-auto mt-auto">
+                    <button id="saved-filter-btn" class="w-full sm:w-auto h-[42px] mt-6 sm:mt-0 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red transition flex items-center justify-center space-x-2 font-medium group">
+                         <!-- Pokéball Icon for Filter Button -->
+                        <svg id="saved-filter-icon" class="w-5 h-5 group-hover:text-pkmn-red transition-colors" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+                             <circle cx="12" cy="12" r="9" />
+                             <path d="M3 12h18" />
+                             <circle cx="12" cy="12" r="3" class="fill-white" />
+                        </svg>
+                        <span id="saved-filter-text">Ver Salvos</span>
+                    </button>
+                </div>
             </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
                 <div>
                     <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Tipo</label>
@@ -150,6 +170,9 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-pkmn-header-bg">
                         <tr>
+                            <th scope="col" class="px-2 py-3 w-10 text-center">
+                                <span class="sr-only">Favorito</span>
+                            </th>
                             <th scope="col" class="hidden sm:table-cell px-2 py-3 sm:px-6 text-left text-xs font-bold text-pkmn-blue uppercase tracking-wider cursor-pointer" data-sort="name">Evento<span class="sort-indicator"></span></th>
                             <th scope="col" class="px-2 py-3 sm:px-6 text-left text-xs font-bold text-pkmn-blue uppercase tracking-wider cursor-pointer" data-sort="type">Tipo<span class="sort-indicator"></span></th>
                             <th scope="col" class="px-2 py-3 sm:px-6 text-left text-xs font-bold text-pkmn-blue uppercase tracking-wider cursor-pointer" data-sort="when">Data<span class="sort-indicator"></span></th>
@@ -189,6 +212,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- Configuration ---
             const API_URL = 'https://pokedata.ovh/events/api/_tcg/cups/challenges/pre/_country/BR'; 
+            const STORAGE_KEY = 'pkmn_saved_events';
 
             // --- DOM Elements ---
             const tableBody = document.getElementById('events-table-body');
@@ -203,6 +227,10 @@
             const cityAllCheckbox = document.getElementById('city-all');
             
             const monthFilter = document.getElementById('month-filter');
+            const savedFilterBtn = document.getElementById('saved-filter-btn');
+            const savedFilterIcon = document.getElementById('saved-filter-icon');
+            const savedFilterText = document.getElementById('saved-filter-text');
+
             const detailsPanel = document.getElementById('details-panel');
             const detailsOverlay = document.getElementById('details-overlay');
             const closeDetailsButton = document.getElementById('close-details');
@@ -219,6 +247,10 @@
 
             let allEvents = [];
             let currentSort = { key: 'when', direction: 'asc' };
+            
+            // Saved Events Logic (LocalStorage)
+            let savedEventIds = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+            let showSavedOnly = false;
 
             // --- API Handling ---
             async function fetchEventsFromAPI() {
@@ -226,7 +258,6 @@
                 let data;
                 
                 try {
-                    // Tentativa 1: Fetch direto
                     try {
                         console.log("Tentando conexão direta...");
                         const response = await fetch(API_URL);
@@ -234,36 +265,35 @@
                         data = await response.json();
                     } catch (directError) {
                         console.warn("Conexão direta falhou (provavelmente CORS), tentando proxy...", directError);
-                        
-                        // Tentativa 2: Fetch via Proxy (para contornar CORS em navegadores)
                         const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(API_URL);
                         const proxyResponse = await fetch(proxyUrl);
                         if (!proxyResponse.ok) throw new Error('Erro na conexão via proxy');
                         data = await proxyResponse.json();
                     }
                     
-                    // Normalização básica caso a API retorne chaves ligeiramente diferentes
                     let eventsArray = Array.isArray(data) ? data : (data.events || []);
 
                     if (!eventsArray || eventsArray.length === 0) {
                         throw new Error("A API retornou uma lista vazia de eventos no Brasil.");
                     }
 
+                    // Add unique IDs to events for selection tracking
+                    // Generating a pseudo-unique ID based on props to persist across sessions better than index
+                    eventsArray = eventsArray.map((e, index) => {
+                         // Fallback ID: name + date + shop + city (hash-like)
+                         const rawId = `${e.name || ''}_${e.when || ''}_${e.shop || ''}`.replace(/\s/g, '').toLowerCase();
+                         return { ...e, uniqueId: rawId };
+                    });
+
                     // FILTRO ROBUSTO: Manter apenas eventos de São Paulo
                     allEvents = eventsArray.filter(event => {
                          if (!event) return false;
-
-                         // Normalizar strings para comparação (upper case, sem espaços extras)
                          const state = (event.state || '').toString().trim().toUpperCase();
                          const city = (event.city || '').toString().trim().toUpperCase();
-                         
-                         // Função auxiliar para remover acentos (ex: SÃO -> SAO)
                          const removeAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
                          const cleanState = removeAccents(state);
                          const cleanCity = removeAccents(city);
 
-                         // Verifica variações comuns
                          return cleanState === 'SP' || 
                                 cleanState.includes('SAO PAULO') || 
                                 cleanCity.includes('SAO PAULO');
@@ -272,7 +302,6 @@
                     setLoadingState(false, true);
                     
                     if (allEvents.length === 0) {
-                        // Se conectou mas o filtro removeu tudo
                         console.warn("Eventos carregados do Brasil, mas nenhum correspondeu ao filtro 'São Paulo'.");
                         noResultsDiv.classList.remove('hidden');
                         noResultsDiv.querySelector('p').textContent = "Conectado à API, mas nenhum evento encontrado em São Paulo no momento.";
@@ -301,12 +330,10 @@
                     statusMessage.className = "font-bold text-green-700";
                     statusSubtext.textContent = `Carregados ${allEvents.length} eventos em São Paulo.`;
                     apiStatusSection.className = "mb-6 p-4 border-l-4 border-green-500 bg-green-50 rounded-r-lg flex items-center justify-between";
-                    // Esconde a barra de status após 5 segundos se for sucesso
                     setTimeout(() => {
                         apiStatusSection.classList.add('hidden');
                     }, 5000);
                 } else {
-                    // Erro
                     loadingSpinner.style.display = 'none';
                     retryButton.classList.remove('hidden');
                     statusMessage.textContent = "Erro ao carregar dados";
@@ -316,14 +343,51 @@
                 }
             }
 
+            // --- Saved Events Logic ---
+            function toggleSaveEvent(id) {
+                if (savedEventIds.has(id)) {
+                    savedEventIds.delete(id);
+                } else {
+                    savedEventIds.add(id);
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify([...savedEventIds]));
+                
+                // If filtering by saved, refresh the whole list logic
+                if (showSavedOnly) {
+                    filterAndSortEvents();
+                } else {
+                    // Just re-render to update icons
+                    filterAndSortEvents();
+                }
+            }
+
+            function toggleSavedFilter() {
+                showSavedOnly = !showSavedOnly;
+                
+                if (showSavedOnly) {
+                    savedFilterBtn.classList.add('bg-pkmn-red', 'text-white', 'border-pkmn-red');
+                    savedFilterBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+                    savedFilterText.textContent = "Mostrando Salvos";
+                } else {
+                    savedFilterBtn.classList.remove('bg-pkmn-red', 'text-white', 'border-pkmn-red');
+                    savedFilterBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+                    savedFilterText.textContent = "Ver Salvos";
+                }
+                
+                filterAndSortEvents();
+            }
+
             // --- UI Rendering ---
             function renderTable(events) {
                 tableBody.innerHTML = '';
                 if (events.length === 0) {
                     noResultsDiv.classList.remove('hidden');
-                    // Mensagem específica dependendo se temos dados carregados mas filtrados pela busca
                     if (allEvents.length > 0) {
-                         noResultsDiv.querySelector('p').textContent = "Nenhum resultado encontrado para os filtros aplicados.";
+                        if (showSavedOnly) {
+                            noResultsDiv.querySelector('p').textContent = "Você ainda não salvou nenhum evento.";
+                        } else {
+                            noResultsDiv.querySelector('p').textContent = "Nenhum resultado encontrado para os filtros aplicados.";
+                        }
                     }
                 } else {
                     noResultsDiv.classList.add('hidden');
@@ -358,7 +422,35 @@
                         typeClass = 'bg-green-100 text-green-800';
                     }
 
+                    // Saved Logic - Pokéball Visuals
+                    const isSaved = savedEventIds.has(event.uniqueId);
+                    const pokeClass = isSaved ? 'text-gray-800' : 'text-gray-400 hover:text-gray-600';
+                    
+                    // Custom SVG for Half-Red Pokéball
+                    // Outline is currentColor. Fill Top is red if saved.
+                    const pokeSVG = `
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+                            <!-- Top Half Fill (Red if saved) -->
+                            <path d="M21 12A9 9 0 0 0 3 12Z" class="${isSaved ? 'fill-pkmn-red stroke-none' : 'hidden'}" />
+                            
+                            <!-- Main Circle Outline -->
+                            <circle cx="12" cy="12" r="9" />
+                            
+                            <!-- Middle Line -->
+                            <path stroke-linecap="round" d="M3 12h18" />
+                            
+                            <!-- Center Button (White) -->
+                            <circle cx="12" cy="12" r="3" class="fill-white" />
+                            <circle cx="12" cy="12" r="1.5" class="fill-gray-800 stroke-none" />
+                        </svg>
+                    `;
+
                     row.innerHTML = `
+                        <td class="px-2 py-3 w-10 text-center" onclick="event.stopPropagation()">
+                             <button class="poke-btn focus:outline-none ${pokeClass}" data-id="${event.uniqueId}" title="${isSaved ? 'Remover dos salvos' : 'Salvar evento'}">
+                                ${pokeSVG}
+                             </button>
+                        </td>
                         <td class="hidden sm:table-cell px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
                             <div class="font-medium text-gray-900">${event.name || 'Sem Nome'}</div>
                         </td>
@@ -374,13 +466,24 @@
                         <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.shop || '-'}</td>
                         <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.city || '-'}</td>
                     `;
-                    row.addEventListener('click', () => showDetails(event));
+                    
+                    // Click on row opens details
+                    row.addEventListener('click', (e) => {
+                        showDetails(event)
+                    });
+
+                    // Poke Button Click
+                    const pokeBtn = row.querySelector('.poke-btn');
+                    pokeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Stop row click
+                        toggleSaveEvent(event.uniqueId);
+                    });
+
                     tableBody.appendChild(row);
                 });
             }
 
             function populateFilters(events) {
-                // Preserve current selections if possible
                 const currentType = typeFilter.value;
                 const currentMonth = monthFilter.value;
 
@@ -396,9 +499,8 @@
                 });
                 if ([...typeFilter.options].some(o => o.value === currentType)) typeFilter.value = currentType;
 
-
                 // --- City Filter (Multi-select) ---
-                cityListContainer.innerHTML = ''; // Limpa lista atual
+                cityListContainer.innerHTML = ''; 
                 const cities = [...new Set(events.map(e => e.city))].sort((a, b) => (a || '').localeCompare(b || ''));
 
                 cities.forEach(city => {
@@ -415,19 +517,16 @@
                         label.textContent = city;
                         label.className = 'text-sm text-gray-700 cursor-pointer flex-grow';
                         
-                        // Ligar clique no label ao checkbox
                         label.addEventListener('click', () => { checkbox.checked = !checkbox.checked; checkbox.dispatchEvent(new Event('change')); });
                         
                         div.appendChild(checkbox);
                         div.appendChild(label);
                         cityListContainer.appendChild(div);
 
-                        // Event Listener para checkboxes individuais
                         checkbox.addEventListener('change', () => {
                             if (checkbox.checked) {
-                                cityAllCheckbox.checked = false; // Desmarca "Todas" se selecionar uma específica
+                                cityAllCheckbox.checked = false; 
                             } else {
-                                // Se nenhuma estiver selecionada, marca "Todas"
                                 const anyChecked = document.querySelectorAll('.city-checkbox:checked').length > 0;
                                 if (!anyChecked) cityAllCheckbox.checked = true;
                             }
@@ -456,7 +555,6 @@
                 updateCityButtonLabel();
             }
 
-            // Função auxiliar para atualizar o texto do botão de cidades
             function updateCityButtonLabel() {
                 if (cityAllCheckbox.checked) {
                     cityFilterLabel.textContent = "Todas as Cidades";
@@ -468,7 +566,7 @@
                 const count = checkedBoxes.length;
 
                 if (count === 0) {
-                    cityAllCheckbox.checked = true; // Fallback
+                    cityAllCheckbox.checked = true; 
                     cityFilterLabel.textContent = "Todas as Cidades";
                     cityFilterLabel.className = "truncate block w-full pr-2 font-normal text-gray-700";
                 } else if (count === 1) {
@@ -486,16 +584,11 @@
                 
                 const whenDate = new Date(event.when);
                 const formattedDate = !isNaN(whenDate) ? whenDate.toLocaleString('pt-br', { dateStyle: 'full', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }) : 'Data inválida';
-
-                // Tratamento robusto para encontrar o endereço
                 const address = event.address || event.street_address || event.street_adress || 'Endereço não informado';
 
                 let pokemonEventLinkHTML = '';
                 if (event.pokemon_url && event.pokemon_url.trim() !== '') {
-                    // Correção: Usa URL base oficial de eventos Play! Pokémon
                     let officialEventUrl = event.pokemon_url;
-                    
-                    // Se a URL não começar com http, assume que é um ID e concatena na base URL correta
                     if (!officialEventUrl.startsWith('http')) {
                         officialEventUrl = `https://www.pokemon.com/us/play-pokemon/pokemon-events/${event.pokemon_url}`;
                     }
@@ -507,6 +600,32 @@
                         </a>`;
                 }
 
+                // Google Calendar Link Logic (Single Event)
+                const start = whenDate.toISOString().replace(/-|:|\.\d\d\d/g,""); // Format YYYYMMDDTHHmmSSZ (UTC)
+                const end = new Date(whenDate.getTime() + (4*60*60*1000)).toISOString().replace(/-|:|\.\d\d\d/g,"");
+                
+                const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.name)}&dates=${start}/${end}&details=${encodeURIComponent("Tipo: " + event.type + "\nLoja: " + event.shop)}&location=${encodeURIComponent(event.shop + " - " + event.city)}`;
+
+                // Save button logic for details panel
+                const isSaved = savedEventIds.has(event.uniqueId);
+                const saveBtnText = isSaved ? 'Remover dos Salvos' : 'Salvar Evento';
+                
+                // SVG for PokeBall
+                const pokeSVG = `
+                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+                        <path d="M21 12A9 9 0 0 0 3 12Z" class="${isSaved ? 'fill-pkmn-red stroke-none' : 'hidden'}" />
+                        <circle cx="12" cy="12" r="9" />
+                        <path stroke-linecap="round" d="M3 12h18" />
+                        <circle cx="12" cy="12" r="3" class="fill-white" />
+                        <circle cx="12" cy="12" r="1.5" class="fill-gray-800 stroke-none" />
+                    </svg>
+                `;
+
+                const saveBtnClass = isSaved 
+                    ? 'bg-gray-100 text-gray-800 border-2 border-pkmn-red' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-300 hover:border-pkmn-red';
+
+
                 detailsContent.innerHTML = `
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Tipo:</strong> ${event.type || '-'}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Loja:</strong> ${event.shop || '-'}</p>
@@ -514,6 +633,15 @@
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Endereço:</strong> ${address}</p>
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Cidade:</strong> ${event.city || '-'}, ${event.state || ''}</p>
                     <div class="mt-6 space-y-2">
+                         <button id="details-save-btn" class="w-full text-center inline-flex items-center justify-center font-bold py-2 px-4 rounded-lg transition ${saveBtnClass}">
+                            ${pokeSVG} ${saveBtnText}
+                        </button>
+
+                        <a href="${gCalUrl}" target="_blank" rel="noopener noreferrer" 
+                           class="w-full text-center inline-block bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition">
+                           Adicionar ao Google Agenda
+                        </a>
+
                         <a href="https://www.google.com/maps?q=${event.latitude},${event.longitude}" target="_blank" rel="noopener noreferrer" 
                            class="w-full text-center inline-block bg-pkmn-red text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition">
                            Ver no Google Maps
@@ -521,6 +649,12 @@
                         ${pokemonEventLinkHTML}
                     </div>
                 `;
+
+                // Add listener to new button
+                document.getElementById('details-save-btn').addEventListener('click', () => {
+                    toggleSaveEvent(event.uniqueId);
+                    showDetails(event); // Re-render details to update button state
+                });
 
                 detailsPanel.classList.remove('translate-x-full');
                 detailsOverlay.classList.remove('hidden');
@@ -539,20 +673,21 @@
                 const selectedType = typeFilter.value;
                 const selectedMonth = monthFilter.value;
                 
-                // Lógica de filtro de cidade (Multi-select)
                 const isAllCities = cityAllCheckbox.checked;
                 const selectedCities = Array.from(document.querySelectorAll('.city-checkbox:checked')).map(cb => cb.value);
 
                 let filtered = allEvents.filter(event => {
+                    // Check saved filter first
+                    if (showSavedOnly && !savedEventIds.has(event.uniqueId)) {
+                        return false;
+                    }
+
                     const matchesSearch = searchTerm === '' || 
                         Object.values(event).some(val => 
                             String(val).toLowerCase().includes(searchTerm)
                         );
                     const matchesType = selectedType === 'all' || event.type === selectedType;
-                    
-                    // City Check
                     const matchesCity = isAllCities || selectedCities.includes(event.city);
-                    
                     const eventDate = new Date(event.when);
                     const matchesMonth = selectedMonth === 'all' || (isNaN(eventDate) ? false : eventDate.getUTCMonth() == selectedMonth);
                     
@@ -603,28 +738,23 @@
             // --- Initial Setup & Event Listeners ---
             searchInput.addEventListener('input', filterAndSortEvents);
             typeFilter.addEventListener('change', filterAndSortEvents);
-            // cityFilter removido pois agora é dinâmico
             monthFilter.addEventListener('change', filterAndSortEvents);
             closeDetailsButton.addEventListener('click', hideDetails);
             detailsOverlay.addEventListener('click', hideDetails);
             document.querySelector('thead').addEventListener('click', handleSort);
             retryButton.addEventListener('click', fetchEventsFromAPI);
+            savedFilterBtn.addEventListener('click', toggleSavedFilter);
 
             // --- Multi-select Dropdown Events ---
-            // Toggle Dropdown
             cityFilterBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Previne fechar imediatamente
+                e.stopPropagation(); 
                 cityDropdown.classList.toggle('hidden');
             });
 
-            // Lógica do Checkbox "Todas"
             cityAllCheckbox.addEventListener('change', () => {
                 if (cityAllCheckbox.checked) {
-                    // Desmarcar todos os outros
                     document.querySelectorAll('.city-checkbox').forEach(cb => cb.checked = false);
                 } else {
-                    // Se desmarcar "Todas" manualmente sem marcar outro, o que acontece?
-                    // Geralmente força marcar todos ou reverte. Vamos reverter para true se nada mais estiver marcado
                     const anyChecked = document.querySelectorAll('.city-checkbox:checked').length > 0;
                     if (!anyChecked) cityAllCheckbox.checked = true;
                 }
@@ -632,7 +762,6 @@
                 filterAndSortEvents();
             });
 
-            // Fechar dropdown ao clicar fora
             document.addEventListener('click', (e) => {
                 if (!cityFilterWrapper.contains(e.target)) {
                     cityDropdown.classList.add('hidden');
