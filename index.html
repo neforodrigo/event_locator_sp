@@ -6,6 +6,11 @@
     <title>Eventos Pokémon TCG - São Paulo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS & JS (Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -86,6 +91,30 @@
         .poke-btn:active {
             transform: scale(1.2) rotate(20deg);
         }
+        /* Map Container */
+        #map-view-container {
+            z-index: 0; /* Ensure map stays below modals */
+        }
+        /* Leaflet Legend */
+        .info.legend {
+            background: white;
+            padding: 6px 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            font-size: 12px;
+            line-height: 18px;
+            color: #555;
+        }
+        .info.legend i {
+            width: 14px;
+            height: 14px;
+            float: left;
+            margin-right: 8px;
+            opacity: 1;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body class="bg-pkmn-bg text-gray-800 pb-20">
@@ -111,24 +140,35 @@
                 </button>
             </div>
 
-            <!-- Filter and Search Controls -->
-            <div class="mb-4 flex flex-col sm:flex-row gap-2 items-center">
-                <div class="w-full flex-grow">
-                    <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Pesquisar</label>
-                    <input type="text" id="search-input" placeholder="Buscar por nome, cidade, loja..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition">
-                </div>
-                <div class="w-full sm:w-auto mt-auto">
-                    <button id="saved-filter-btn" class="w-full sm:w-auto h-[42px] mt-6 sm:mt-0 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red transition flex items-center justify-center space-x-2 font-medium group">
-                         <!-- Pokéball Icon for Filter Button -->
-                        <svg id="saved-filter-icon" class="w-5 h-5 group-hover:text-pkmn-red transition-colors" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-                             <circle cx="12" cy="12" r="9" />
-                             <path d="M3 12h18" />
-                             <circle cx="12" cy="12" r="3" class="fill-white" />
-                        </svg>
-                        <span id="saved-filter-text">Ver Salvos</span>
-                        <span id="saved-count-badge" class="ml-1 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center hidden">0</span>
+            <!-- View Toggle & Saved Filter -->
+            <div class="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-200 pb-4">
+                <!-- View Toggle Buttons -->
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button id="view-list-btn" class="px-4 py-2 rounded-md text-sm font-bold transition shadow-sm bg-white text-pkmn-blue">
+                        Lista
+                    </button>
+                    <button id="view-map-btn" class="px-4 py-2 rounded-md text-sm font-bold text-gray-500 hover:text-pkmn-blue transition">
+                        Mapa
                     </button>
                 </div>
+
+                <!-- Saved Filter Button -->
+                <button id="saved-filter-btn" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red transition flex items-center justify-center space-x-2 font-medium group">
+                     <!-- Pokéball Icon for Filter Button -->
+                    <svg id="saved-filter-icon" class="w-5 h-5 group-hover:text-pkmn-red transition-colors" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+                         <circle cx="12" cy="12" r="9" />
+                         <path d="M3 12h18" />
+                         <circle cx="12" cy="12" r="3" class="fill-white" />
+                    </svg>
+                    <span id="saved-filter-text">Ver Salvos</span>
+                    <span id="saved-count-badge" class="ml-1 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center hidden">0</span>
+                </button>
+            </div>
+
+            <!-- Filter and Search Controls -->
+            <div class="mb-4">
+                <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Pesquisar</label>
+                <input type="text" id="search-input" placeholder="Buscar por nome, cidade, loja..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition">
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
@@ -166,8 +206,8 @@
                 </div>
             </div>
 
-            <!-- Events Table -->
-            <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <!-- List View: Events Table -->
+            <div id="list-view-container" class="overflow-x-auto rounded-lg border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-pkmn-header-bg">
                         <tr>
@@ -185,9 +225,13 @@
                         <!-- Rows will be dynamically inserted here -->
                     </tbody>
                 </table>
-                 <div id="no-results" class="text-center py-8 text-gray-500 hidden">
-                    <p>Nenhum evento encontrado.</p>
-                </div>
+            </div>
+
+            <!-- Map View: Leaflet Map -->
+            <div id="map-view-container" class="hidden w-full h-[500px] rounded-lg border border-gray-200 shadow-inner"></div>
+
+            <div id="no-results" class="text-center py-8 text-gray-500 hidden">
+                <p>Nenhum evento encontrado.</p>
             </div>
         </main>
 
@@ -254,6 +298,12 @@
             const savedCountBadge = document.getElementById('saved-count-badge');
             const savedDisclaimer = document.getElementById('saved-disclaimer');
 
+            // View Toggle Elements
+            const viewListBtn = document.getElementById('view-list-btn');
+            const viewMapBtn = document.getElementById('view-map-btn');
+            const listViewContainer = document.getElementById('list-view-container');
+            const mapViewContainer = document.getElementById('map-view-container');
+
             const detailsPanel = document.getElementById('details-panel');
             const detailsOverlay = document.getElementById('details-overlay');
             const closeDetailsButton = document.getElementById('close-details');
@@ -270,6 +320,12 @@
 
             let allEvents = [];
             let currentSort = { key: 'when', direction: 'asc' };
+            let currentView = 'list'; // 'list' or 'map'
+            
+            // Map Variables
+            let map;
+            let markersLayer;
+            let legendControl;
             
             // Saved Events Logic (LocalStorage)
             let savedEventIds = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
@@ -301,9 +357,7 @@
                     }
 
                     // Add unique IDs to events for selection tracking
-                    // Generating a pseudo-unique ID based on props to persist across sessions better than index
                     eventsArray = eventsArray.map((e, index) => {
-                         // Fallback ID: name + date + shop + city (hash-like)
                          const rawId = `${e.name || ''}_${e.when || ''}_${e.shop || ''}`.replace(/\s/g, '').toLowerCase();
                          return { ...e, uniqueId: rawId };
                     });
@@ -376,14 +430,7 @@
                 }
                 localStorage.setItem(STORAGE_KEY, JSON.stringify([...savedEventIds]));
                 updateSavedCountUI();
-                
-                // If filtering by saved, refresh the whole list logic
-                if (showSavedOnly) {
-                    filterAndSortEvents();
-                } else {
-                    // Just re-render to update icons
-                    filterAndSortEvents();
-                }
+                filterAndSortEvents();
             }
 
             function updateSavedCountUI() {
@@ -404,31 +451,159 @@
                     savedFilterBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
                     savedFilterText.textContent = "Mostrando Salvos";
                     
-                    // Update Badge style for Active State
                     savedCountBadge.classList.remove('bg-gray-200', 'text-gray-600');
                     savedCountBadge.classList.add('bg-white', 'text-pkmn-red');
 
-                    // Show Disclaimer
                     savedDisclaimer.classList.remove('hidden');
                 } else {
                     savedFilterBtn.classList.remove('bg-pkmn-red', 'text-white', 'border-pkmn-red');
                     savedFilterBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
                     savedFilterText.textContent = "Ver Salvos";
 
-                    // Update Badge style for Inactive State
                     savedCountBadge.classList.remove('bg-white', 'text-pkmn-red');
                     savedCountBadge.classList.add('bg-gray-200', 'text-gray-600');
 
-                    // Hide Disclaimer
                     savedDisclaimer.classList.add('hidden');
                 }
                 
                 filterAndSortEvents();
             }
 
+            // --- Map Logic ---
+            function initMap() {
+                if (map) return;
+                
+                // Initialize map centered on São Paulo
+                map = L.map('map-view-container').setView([-23.55052, -46.633309], 10);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                markersLayer = L.layerGroup().addTo(map);
+
+                // Add Legend
+                const legend = L.control({position: 'bottomright'});
+                legend.onAdd = function (map) {
+                    const div = L.DomUtil.create('div', 'info legend');
+                    div.innerHTML += '<i style="background: #e63946"></i> League Cup<br>';
+                    div.innerHTML += '<i style="background: #1c3b69"></i> Challenge<br>';
+                    div.innerHTML += '<i style="background: #16a34a"></i> Pré-Release<br>';
+                    return div;
+                };
+                legend.addTo(map);
+            }
+
+            function updateMapMarkers(events) {
+                if (!map || !markersLayer) return;
+                
+                markersLayer.clearLayers();
+                
+                const validBounds = [];
+
+                events.forEach(event => {
+                    if (event.latitude && event.longitude) {
+                        const lat = parseFloat(event.latitude);
+                        const lng = parseFloat(event.longitude);
+                        
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            // Marker Color Logic
+                            let typeClass = 'bg-gray-500';
+                            const typeLower = (event.type || '').toLowerCase();
+
+                            if (typeLower.includes('cup')) {
+                                typeClass = 'bg-pkmn-red';
+                            } else if (typeLower.includes('challenge')) {
+                                typeClass = 'bg-pkmn-blue';
+                            } else if (typeLower.includes('prerelease')) {
+                                typeClass = 'bg-green-600';
+                            }
+
+                            // Create colored dot icon using standard CSS/Tailwind classes
+                            // Leaflet divIcon allows HTML content
+                            const customIcon = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div class="w-4 h-4 rounded-full border-2 border-white shadow-md ${typeClass}"></div>`,
+                                iconSize: [16, 16],
+                                iconAnchor: [8, 8],
+                                popupAnchor: [0, -8]
+                            });
+                            
+                            const marker = L.marker([lat, lng], { icon: customIcon });
+                            
+                            // Simple Popup
+                            const whenDate = new Date(event.when);
+                            const formattedDate = !isNaN(whenDate) ? whenDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
+                            
+                            const popupContent = `
+                                <div class="text-center">
+                                    <strong class="text-pkmn-blue text-sm block">${event.name}</strong>
+                                    <span class="text-xs text-gray-600 block">${event.shop}</span>
+                                    <span class="text-xs text-gray-500 block mb-2">${formattedDate} - ${event.type}</span>
+                                    <button class="bg-pkmn-red text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition" 
+                                            onclick="document.dispatchEvent(new CustomEvent('openDetails', {detail: '${event.uniqueId}'}))">
+                                        Ver Detalhes
+                                    </button>
+                                </div>
+                            `;
+                            
+                            marker.bindPopup(popupContent);
+                            
+                            markersLayer.addLayer(marker);
+                            validBounds.push([lat, lng]);
+                        }
+                    }
+                });
+
+                if (validBounds.length > 0) {
+                    map.fitBounds(validBounds, { padding: [50, 50] });
+                }
+            }
+
+            // Custom event listener for map popup button
+            document.addEventListener('openDetails', (e) => {
+                const eventId = e.detail;
+                const event = allEvents.find(evt => evt.uniqueId === eventId);
+                if (event) showDetails(event);
+            });
+
+            // --- View Switching ---
+            function switchView(view) {
+                currentView = view;
+                if (view === 'list') {
+                    listViewContainer.classList.remove('hidden');
+                    mapViewContainer.classList.add('hidden');
+                    
+                    viewListBtn.classList.add('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewListBtn.classList.remove('text-gray-500');
+                    
+                    viewMapBtn.classList.remove('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewMapBtn.classList.add('text-gray-500');
+                } else {
+                    listViewContainer.classList.add('hidden');
+                    mapViewContainer.classList.remove('hidden');
+                    
+                    viewMapBtn.classList.add('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewMapBtn.classList.remove('text-gray-500');
+                    
+                    viewListBtn.classList.remove('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewListBtn.classList.add('text-gray-500');
+
+                    if (!map) initMap();
+                    // Leaflet requires size invalidation when container becomes visible
+                    setTimeout(() => {
+                        map.invalidateSize();
+                        // Trigger re-filter to populate map
+                        filterAndSortEvents(); 
+                    }, 100);
+                }
+            }
+
             // --- UI Rendering ---
             function renderTable(events) {
                 tableBody.innerHTML = '';
+                
+                // Common No Results Logic
                 if (events.length === 0) {
                     noResultsDiv.classList.remove('hidden');
                     if (allEvents.length > 0) {
@@ -475,20 +650,11 @@
                     const isSaved = savedEventIds.has(event.uniqueId);
                     const pokeClass = isSaved ? 'text-gray-800' : 'text-gray-400 hover:text-gray-600';
                     
-                    // Custom SVG for Half-Red Pokéball
-                    // Outline is currentColor. Fill Top is red if saved.
                     const pokeSVG = `
                         <svg class="w-6 h-6" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-                            <!-- Top Half Fill (Red if saved) -->
                             <path d="M21 12A9 9 0 0 0 3 12Z" class="${isSaved ? 'fill-pkmn-red stroke-none' : 'hidden'}" />
-                            
-                            <!-- Main Circle Outline -->
                             <circle cx="12" cy="12" r="9" />
-                            
-                            <!-- Middle Line -->
                             <path stroke-linecap="round" d="M3 12h18" />
-                            
-                            <!-- Center Button (White) -->
                             <circle cx="12" cy="12" r="3" class="fill-white" />
                             <circle cx="12" cy="12" r="1.5" class="fill-gray-800 stroke-none" />
                         </svg>
@@ -516,15 +682,13 @@
                         <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.city || '-'}</td>
                     `;
                     
-                    // Click on row opens details
                     row.addEventListener('click', (e) => {
                         showDetails(event)
                     });
 
-                    // Poke Button Click
                     const pokeBtn = row.querySelector('.poke-btn');
                     pokeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Stop row click
+                        e.stopPropagation(); 
                         toggleSaveEvent(event.uniqueId);
                     });
 
@@ -649,17 +813,14 @@
                         </a>`;
                 }
 
-                // Google Calendar Link Logic (Single Event)
-                const start = whenDate.toISOString().replace(/-|:|\.\d\d\d/g,""); // Format YYYYMMDDTHHmmSSZ (UTC)
+                const start = whenDate.toISOString().replace(/-|:|\.\d\d\d/g,"");
                 const end = new Date(whenDate.getTime() + (4*60*60*1000)).toISOString().replace(/-|:|\.\d\d\d/g,"");
                 
                 const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.name)}&dates=${start}/${end}&details=${encodeURIComponent("Tipo: " + event.type + "\nLoja: " + event.shop)}&location=${encodeURIComponent(event.shop + " - " + event.city)}`;
 
-                // Save button logic for details panel
                 const isSaved = savedEventIds.has(event.uniqueId);
                 const saveBtnText = isSaved ? 'Remover dos Salvos' : 'Salvar Evento';
                 
-                // SVG for PokeBall
                 const pokeSVG = `
                     <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
                         <path d="M21 12A9 9 0 0 0 3 12Z" class="${isSaved ? 'fill-pkmn-red stroke-none' : 'hidden'}" />
@@ -674,8 +835,6 @@
                     ? 'bg-gray-100 text-gray-800 border-2 border-pkmn-red' 
                     : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-300 hover:border-pkmn-red';
                 
-                // Google Maps Link Logic
-                // Prioritize address search over coordinates as requested
                 const mapQuery = encodeURIComponent(`${event.shop || ''} ${address} ${event.city || ''} ${event.state || ''}`);
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
@@ -703,10 +862,9 @@
                     </div>
                 `;
 
-                // Add listener to new button
                 document.getElementById('details-save-btn').addEventListener('click', () => {
                     toggleSaveEvent(event.uniqueId);
-                    showDetails(event); // Re-render details to update button state
+                    showDetails(event); 
                 });
 
                 detailsPanel.classList.remove('translate-x-full');
@@ -765,6 +923,11 @@
                 });
                 
                 renderTable(filtered);
+                
+                // Update Map if we are in map view
+                if (currentView === 'map') {
+                    updateMapMarkers(filtered);
+                }
             }
             
             function handleSort(e) {
@@ -797,6 +960,9 @@
             document.querySelector('thead').addEventListener('click', handleSort);
             retryButton.addEventListener('click', fetchEventsFromAPI);
             savedFilterBtn.addEventListener('click', toggleSavedFilter);
+            
+            viewListBtn.addEventListener('click', () => switchView('list'));
+            viewMapBtn.addEventListener('click', () => switchView('map'));
 
             // --- Multi-select Dropdown Events ---
             cityFilterBtn.addEventListener('click', (e) => {
