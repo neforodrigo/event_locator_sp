@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eventos Pokémon TCG - São Paulo</title>
+    <title>Eventos Pokémon TCG - Brasil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS & JS (Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -86,6 +91,30 @@
         .poke-btn:active {
             transform: scale(1.2) rotate(20deg);
         }
+        /* Map Container */
+        #map-view-container {
+            z-index: 0; /* Ensure map stays below modals */
+        }
+        /* Leaflet Legend */
+        .info.legend {
+            background: white;
+            padding: 6px 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            font-size: 12px;
+            line-height: 18px;
+            color: #555;
+        }
+        .info.legend i {
+            width: 14px;
+            height: 14px;
+            float: left;
+            margin-right: 8px;
+            opacity: 1;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body class="bg-pkmn-bg text-gray-800 pb-20">
@@ -93,12 +122,12 @@
     <div class="container mx-auto p-2 sm:p-4 md:p-8">
         <header class="text-center mb-6 p-3 sm:p-6 bg-pkmn-header-bg rounded-xl border-b-4 border-pkmn-light-blue">
             <h1 class="text-2xl sm:text-4xl md:text-5xl font-black text-pkmn-blue uppercase tracking-widest">TOWN MAP</h1>
-            <p class="text-xs sm:text-md text-gray-600 mt-1 sm:mt-3 tracking-wider">Torneios de Pokémon TCG em São Paulo</p>
+            <p class="text-xs sm:text-md text-gray-600 mt-1 sm:mt-3 tracking-wider">Torneios de Pokémon TCG no Brasil</p>
         </header>
 
         <main class="bg-white rounded-xl shadow-lg p-3 sm:p-6 relative">
-            <!-- API Status Section -->
-            <div id="api-status-section" class="mb-6 p-4 border-l-4 border-pkmn-blue bg-blue-50 rounded-r-lg flex items-center justify-between">
+            <!-- API Status Section (Hidden by default) -->
+            <div id="api-status-section" class="hidden mb-6 p-4 border-l-4 border-pkmn-blue bg-blue-50 rounded-r-lg flex items-center justify-between">
                 <div class="flex items-center">
                     <div id="loading-spinner" class="loader"></div>
                     <div>
@@ -111,27 +140,44 @@
                 </button>
             </div>
 
-            <!-- Filter and Search Controls -->
-            <div class="mb-4 flex flex-col sm:flex-row gap-2 items-center">
-                <div class="w-full flex-grow">
-                    <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Pesquisar</label>
-                    <input type="text" id="search-input" placeholder="Buscar por nome, cidade, loja..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition">
-                </div>
-                <div class="w-full sm:w-auto mt-auto">
-                    <button id="saved-filter-btn" class="w-full sm:w-auto h-[42px] mt-6 sm:mt-0 px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red transition flex items-center justify-center space-x-2 font-medium group">
-                         <!-- Pokéball Icon for Filter Button -->
-                        <svg id="saved-filter-icon" class="w-5 h-5 group-hover:text-pkmn-red transition-colors" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-                             <circle cx="12" cy="12" r="9" />
-                             <path d="M3 12h18" />
-                             <circle cx="12" cy="12" r="3" class="fill-white" />
-                        </svg>
-                        <span id="saved-filter-text">Ver Salvos</span>
-                        <span id="saved-count-badge" class="ml-1 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center hidden">0</span>
+            <!-- View Toggle & Saved Filter -->
+            <div class="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-200 pb-4">
+                <!-- View Toggle Buttons -->
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button id="view-list-btn" class="px-4 py-2 rounded-md text-sm font-bold transition shadow-sm bg-white text-pkmn-blue">
+                        Lista
+                    </button>
+                    <button id="view-map-btn" class="px-4 py-2 rounded-md text-sm font-bold text-gray-500 hover:text-pkmn-blue transition">
+                        Mapa
                     </button>
                 </div>
+
+                <!-- Saved Filter Button -->
+                <button id="saved-filter-btn" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red transition flex items-center justify-center space-x-2 font-medium group">
+                     <!-- Pokéball Icon for Filter Button -->
+                    <svg id="saved-filter-icon" class="w-5 h-5 group-hover:text-pkmn-red transition-colors" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+                         <circle cx="12" cy="12" r="9" />
+                         <path d="M3 12h18" />
+                         <circle cx="12" cy="12" r="3" class="fill-white" />
+                    </svg>
+                    <span id="saved-filter-text">Ver Salvos</span>
+                    <span id="saved-count-badge" class="ml-1 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center hidden">0</span>
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+            <!-- Filter and Search Controls -->
+            <div class="mb-4">
+                <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Pesquisar</label>
+                <input type="text" id="search-input" placeholder="Buscar por nome, cidade, loja..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                <div>
+                    <label for="state-filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Estado</label>
+                    <select id="state-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition bg-white">
+                        <option value="all">Todos os Estados</option>
+                    </select>
+                </div>
                 <div>
                     <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Tipo</label>
                     <select id="type-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition bg-white">
@@ -166,8 +212,8 @@
                 </div>
             </div>
 
-            <!-- Events Table -->
-            <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <!-- List View: Events Table -->
+            <div id="list-view-container" class="overflow-x-auto rounded-lg border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-pkmn-header-bg">
                         <tr>
@@ -185,9 +231,13 @@
                         <!-- Rows will be dynamically inserted here -->
                     </tbody>
                 </table>
-                 <div id="no-results" class="text-center py-8 text-gray-500 hidden">
-                    <p>Nenhum evento encontrado.</p>
-                </div>
+            </div>
+
+            <!-- Map View: Leaflet Map -->
+            <div id="map-view-container" class="hidden w-full h-[500px] rounded-lg border border-gray-200 shadow-inner"></div>
+
+            <div id="no-results" class="text-center py-8 text-gray-500 hidden">
+                <p>Nenhum evento encontrado.</p>
             </div>
         </main>
 
@@ -239,6 +289,8 @@
             const tableBody = document.getElementById('events-table-body');
             const searchInput = document.getElementById('search-input');
             const typeFilter = document.getElementById('type-filter');
+            const stateFilter = document.getElementById('state-filter'); // New State Filter
+            
             // City filter elements
             const cityFilterWrapper = document.getElementById('city-filter-wrapper');
             const cityFilterBtn = document.getElementById('city-filter-btn');
@@ -253,6 +305,12 @@
             const savedFilterText = document.getElementById('saved-filter-text');
             const savedCountBadge = document.getElementById('saved-count-badge');
             const savedDisclaimer = document.getElementById('saved-disclaimer');
+
+            // View Toggle Elements
+            const viewListBtn = document.getElementById('view-list-btn');
+            const viewMapBtn = document.getElementById('view-map-btn');
+            const listViewContainer = document.getElementById('list-view-container');
+            const mapViewContainer = document.getElementById('map-view-container');
 
             const detailsPanel = document.getElementById('details-panel');
             const detailsOverlay = document.getElementById('details-overlay');
@@ -270,6 +328,12 @@
 
             let allEvents = [];
             let currentSort = { key: 'when', direction: 'asc' };
+            let currentView = 'list'; // 'list' or 'map'
+            
+            // Map Variables
+            let map;
+            let markersLayer;
+            let legendControl;
             
             // Saved Events Logic (LocalStorage)
             let savedEventIds = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
@@ -301,33 +365,20 @@
                     }
 
                     // Add unique IDs to events for selection tracking
-                    // Generating a pseudo-unique ID based on props to persist across sessions better than index
                     eventsArray = eventsArray.map((e, index) => {
-                         // Fallback ID: name + date + shop + city (hash-like)
                          const rawId = `${e.name || ''}_${e.when || ''}_${e.shop || ''}`.replace(/\s/g, '').toLowerCase();
                          return { ...e, uniqueId: rawId };
                     });
 
-                    // FILTRO ROBUSTO: Manter apenas eventos de São Paulo
-                    allEvents = eventsArray.filter(event => {
-                         if (!event) return false;
-                         const state = (event.state || '').toString().trim().toUpperCase();
-                         const city = (event.city || '').toString().trim().toUpperCase();
-                         const removeAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                         const cleanState = removeAccents(state);
-                         const cleanCity = removeAccents(city);
-
-                         return cleanState === 'SP' || 
-                                cleanState.includes('SAO PAULO') || 
-                                cleanCity.includes('SAO PAULO');
-                    });
+                    // Load ALL events (No more hard filtering for SP here)
+                    allEvents = eventsArray;
 
                     setLoadingState(false, true);
                     
                     if (allEvents.length === 0) {
-                        console.warn("Eventos carregados do Brasil, mas nenhum correspondeu ao filtro 'São Paulo'.");
+                        console.warn("Eventos carregados do Brasil, mas lista está vazia.");
                         noResultsDiv.classList.remove('hidden');
-                        noResultsDiv.querySelector('p').textContent = "Conectado à API, mas nenhum evento encontrado em São Paulo no momento.";
+                        noResultsDiv.querySelector('p').textContent = "Conectado à API, mas nenhum evento encontrado no momento.";
                     } else {
                         updateSavedCountUI();
                         populateFilters(allEvents);
@@ -342,28 +393,20 @@
 
             function setLoadingState(isLoading, isSuccess = false, errorMessage = '') {
                 if (isLoading) {
-                    loadingSpinner.style.display = 'inline-block';
-                    retryButton.classList.add('hidden');
-                    statusMessage.textContent = "Conectando à PokéData API...";
-                    statusMessage.className = "font-bold text-pkmn-blue";
-                    statusSubtext.textContent = "Buscando eventos recentes (Tentando conexão direta e proxy)...";
-                    apiStatusSection.className = "mb-6 p-4 border-l-4 border-pkmn-blue bg-blue-50 rounded-r-lg flex items-center justify-between";
+                    // Carregamento silencioso
+                    apiStatusSection.classList.add('hidden');
                 } else if (isSuccess) {
-                    loadingSpinner.style.display = 'none';
-                    statusMessage.textContent = "Dados Atualizados!";
-                    statusMessage.className = "font-bold text-green-700";
-                    statusSubtext.textContent = `Carregados ${allEvents.length} eventos em São Paulo.`;
-                    apiStatusSection.className = "mb-6 p-4 border-l-4 border-green-500 bg-green-50 rounded-r-lg flex items-center justify-between";
-                    setTimeout(() => {
-                        apiStatusSection.classList.add('hidden');
-                    }, 5000);
+                    // Sucesso silencioso
+                    apiStatusSection.classList.add('hidden');
                 } else {
+                    // Mostrar apenas em caso de erro
                     loadingSpinner.style.display = 'none';
                     retryButton.classList.remove('hidden');
                     statusMessage.textContent = "Erro ao carregar dados";
                     statusMessage.className = "font-bold text-red-700";
                     statusSubtext.textContent = `Não foi possível carregar os dados. Detalhe: ${errorMessage}`;
                     apiStatusSection.className = "mb-6 p-4 border-l-4 border-pkmn-red bg-red-50 rounded-r-lg flex items-center justify-between";
+                    apiStatusSection.classList.remove('hidden');
                 }
             }
 
@@ -376,14 +419,7 @@
                 }
                 localStorage.setItem(STORAGE_KEY, JSON.stringify([...savedEventIds]));
                 updateSavedCountUI();
-                
-                // If filtering by saved, refresh the whole list logic
-                if (showSavedOnly) {
-                    filterAndSortEvents();
-                } else {
-                    // Just re-render to update icons
-                    filterAndSortEvents();
-                }
+                filterAndSortEvents();
             }
 
             function updateSavedCountUI() {
@@ -404,31 +440,152 @@
                     savedFilterBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
                     savedFilterText.textContent = "Mostrando Salvos";
                     
-                    // Update Badge style for Active State
                     savedCountBadge.classList.remove('bg-gray-200', 'text-gray-600');
                     savedCountBadge.classList.add('bg-white', 'text-pkmn-red');
 
-                    // Show Disclaimer
                     savedDisclaimer.classList.remove('hidden');
                 } else {
                     savedFilterBtn.classList.remove('bg-pkmn-red', 'text-white', 'border-pkmn-red');
                     savedFilterBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
                     savedFilterText.textContent = "Ver Salvos";
 
-                    // Update Badge style for Inactive State
                     savedCountBadge.classList.remove('bg-white', 'text-pkmn-red');
                     savedCountBadge.classList.add('bg-gray-200', 'text-gray-600');
 
-                    // Hide Disclaimer
                     savedDisclaimer.classList.add('hidden');
                 }
                 
                 filterAndSortEvents();
             }
 
+            // --- Map Logic ---
+            function initMap() {
+                if (map) return;
+                
+                // Initialize map centered on Brazil (generic center)
+                map = L.map('map-view-container').setView([-14.235004, -51.92528], 4);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                markersLayer = L.layerGroup().addTo(map);
+
+                // Add Legend
+                const legend = L.control({position: 'bottomright'});
+                legend.onAdd = function (map) {
+                    const div = L.DomUtil.create('div', 'info legend');
+                    div.innerHTML += '<i style="background: #e63946"></i> League Cup<br>';
+                    div.innerHTML += '<i style="background: #1c3b69"></i> Challenge<br>';
+                    div.innerHTML += '<i style="background: #16a34a"></i> Pré-Release<br>';
+                    return div;
+                };
+                legend.addTo(map);
+            }
+
+            function updateMapMarkers(events) {
+                if (!map || !markersLayer) return;
+                
+                markersLayer.clearLayers();
+                
+                const validBounds = [];
+
+                events.forEach(event => {
+                    if (event.latitude && event.longitude) {
+                        const lat = parseFloat(event.latitude);
+                        const lng = parseFloat(event.longitude);
+                        
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            // Marker Color Logic
+                            let typeClass = 'bg-gray-500';
+                            const typeLower = (event.type || '').toLowerCase();
+
+                            if (typeLower.includes('cup')) {
+                                typeClass = 'bg-pkmn-red';
+                            } else if (typeLower.includes('challenge')) {
+                                typeClass = 'bg-pkmn-blue';
+                            } else if (typeLower.includes('prerelease')) {
+                                typeClass = 'bg-green-600';
+                            }
+
+                            const customIcon = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div class="w-4 h-4 rounded-full border-2 border-white shadow-md ${typeClass}"></div>`,
+                                iconSize: [16, 16],
+                                iconAnchor: [8, 8],
+                                popupAnchor: [0, -8]
+                            });
+                            
+                            const marker = L.marker([lat, lng], { icon: customIcon });
+                            
+                            const whenDate = new Date(event.when);
+                            const formattedDate = !isNaN(whenDate) ? whenDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '';
+                            
+                            const popupContent = `
+                                <div class="text-center">
+                                    <strong class="text-pkmn-blue text-sm block">${event.name}</strong>
+                                    <span class="text-xs text-gray-600 block">${event.shop}</span>
+                                    <span class="text-xs text-gray-500 block mb-2">${formattedDate} - ${event.type}</span>
+                                    <button class="bg-pkmn-red text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition" 
+                                            onclick="document.dispatchEvent(new CustomEvent('openDetails', {detail: '${event.uniqueId}'}))">
+                                        Ver Detalhes
+                                    </button>
+                                </div>
+                            `;
+                            
+                            marker.bindPopup(popupContent);
+                            
+                            markersLayer.addLayer(marker);
+                            validBounds.push([lat, lng]);
+                        }
+                    }
+                });
+
+                if (validBounds.length > 0) {
+                    map.fitBounds(validBounds, { padding: [50, 50] });
+                }
+            }
+
+            document.addEventListener('openDetails', (e) => {
+                const eventId = e.detail;
+                const event = allEvents.find(evt => evt.uniqueId === eventId);
+                if (event) showDetails(event);
+            });
+
+            // --- View Switching ---
+            function switchView(view) {
+                currentView = view;
+                if (view === 'list') {
+                    listViewContainer.classList.remove('hidden');
+                    mapViewContainer.classList.add('hidden');
+                    
+                    viewListBtn.classList.add('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewListBtn.classList.remove('text-gray-500');
+                    
+                    viewMapBtn.classList.remove('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewMapBtn.classList.add('text-gray-500');
+                } else {
+                    listViewContainer.classList.add('hidden');
+                    mapViewContainer.classList.remove('hidden');
+                    
+                    viewMapBtn.classList.add('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewMapBtn.classList.remove('text-gray-500');
+                    
+                    viewListBtn.classList.remove('bg-white', 'text-pkmn-blue', 'shadow-sm');
+                    viewListBtn.classList.add('text-gray-500');
+
+                    if (!map) initMap();
+                    setTimeout(() => {
+                        map.invalidateSize();
+                        filterAndSortEvents(); 
+                    }, 100);
+                }
+            }
+
             // --- UI Rendering ---
             function renderTable(events) {
                 tableBody.innerHTML = '';
+                
                 if (events.length === 0) {
                     noResultsDiv.classList.remove('hidden');
                     if (allEvents.length > 0) {
@@ -457,7 +614,7 @@
 
                     let abbreviatedType = event.type || 'Evento';
                     let fullTypeName = event.type || 'Evento';
-                    let typeClass = 'bg-gray-100 text-gray-800'; // Default
+                    let typeClass = 'bg-gray-100 text-gray-800'; 
 
                     if (fullTypeName === 'League Challenge') {
                         abbreviatedType = 'Challenge';
@@ -467,28 +624,18 @@
                         typeClass = 'bg-red-100 text-red-800';
                     } else if (fullTypeName && fullTypeName.toLowerCase().includes('prerelease')) {
                         abbreviatedType = 'Pré Release';
-                        fullTypeName = 'Pré Release'; // Manter consistência
+                        fullTypeName = 'Pré Release';
                         typeClass = 'bg-green-100 text-green-800';
                     }
 
-                    // Saved Logic - Pokéball Visuals
                     const isSaved = savedEventIds.has(event.uniqueId);
                     const pokeClass = isSaved ? 'text-gray-800' : 'text-gray-400 hover:text-gray-600';
                     
-                    // Custom SVG for Half-Red Pokéball
-                    // Outline is currentColor. Fill Top is red if saved.
                     const pokeSVG = `
                         <svg class="w-6 h-6" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-                            <!-- Top Half Fill (Red if saved) -->
                             <path d="M21 12A9 9 0 0 0 3 12Z" class="${isSaved ? 'fill-pkmn-red stroke-none' : 'hidden'}" />
-                            
-                            <!-- Main Circle Outline -->
                             <circle cx="12" cy="12" r="9" />
-                            
-                            <!-- Middle Line -->
                             <path stroke-linecap="round" d="M3 12h18" />
-                            
-                            <!-- Center Button (White) -->
                             <circle cx="12" cy="12" r="3" class="fill-white" />
                             <circle cx="12" cy="12" r="1.5" class="fill-gray-800 stroke-none" />
                         </svg>
@@ -516,15 +663,13 @@
                         <td class="px-2 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${event.city || '-'}</td>
                     `;
                     
-                    // Click on row opens details
                     row.addEventListener('click', (e) => {
                         showDetails(event)
                     });
 
-                    // Poke Button Click
                     const pokeBtn = row.querySelector('.poke-btn');
                     pokeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Stop row click
+                        e.stopPropagation(); 
                         toggleSaveEvent(event.uniqueId);
                     });
 
@@ -532,27 +677,31 @@
                 });
             }
 
-            function populateFilters(events) {
-                const currentType = typeFilter.value;
-                const currentMonth = monthFilter.value;
+            function updateCityOptions(events, selectedState) {
+                // Filter cities based on selected state
+                let availableCities = [];
+                if (selectedState === 'all') {
+                    availableCities = [...new Set(events.map(e => e.city))];
+                } else {
+                    availableCities = [...new Set(events.filter(e => {
+                        const evtState = (e.state || '').toString().trim().toUpperCase();
+                        const filterState = selectedState.toString().trim().toUpperCase();
+                        // Handle simple match
+                        return evtState === filterState || evtState.includes(filterState);
+                    }).map(e => e.city))];
+                }
+                
+                availableCities.sort((a, b) => (a || '').localeCompare(b || ''));
 
-                // --- Type Filter ---
-                typeFilter.innerHTML = '<option value="all">Todos os Tipos</option>';
-                const types = [...new Set(events.map(e => e.type))];
-                types.forEach(type => {
-                    if(!type) return;
-                    const option = document.createElement('option');
-                    option.value = type;
-                    option.textContent = type.toLowerCase().includes('prerelease') ? 'Pré Release' : type;
-                    typeFilter.appendChild(option);
-                });
-                if ([...typeFilter.options].some(o => o.value === currentType)) typeFilter.value = currentType;
-
-                // --- City Filter (Multi-select) ---
+                // Rebuild City List
                 cityListContainer.innerHTML = ''; 
-                const cities = [...new Set(events.map(e => e.city))].sort((a, b) => (a || '').localeCompare(b || ''));
+                
+                // If cities list changes, we should probably clear selected cities or handle them gracefully
+                // For simplicity, we keep "All Cities" selected when state changes manually
+                cityAllCheckbox.checked = true;
+                updateCityButtonLabel();
 
-                cities.forEach(city => {
+                availableCities.forEach(city => {
                     if (city) {
                         const div = document.createElement('div');
                         div.className = 'flex items-center space-x-2 p-1 rounded hover:bg-gray-50';
@@ -584,6 +733,49 @@
                         });
                     }
                 });
+            }
+
+            function populateFilters(events) {
+                const currentType = typeFilter.value;
+                const currentMonth = monthFilter.value;
+                // Preserve state selection or default to SP
+                const currentState = stateFilter.value === 'all' ? 'SP' : stateFilter.value; 
+
+                // --- State Filter ---
+                stateFilter.innerHTML = '<option value="all">Todos os Estados</option>';
+                // Extract clean state names/codes
+                const states = [...new Set(events.map(e => (e.state || '').trim().toUpperCase()))].filter(s => s).sort();
+                
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateFilter.appendChild(option);
+                });
+
+                // Default to SP if available, else All
+                if ([...stateFilter.options].some(o => o.value === 'SP')) {
+                    stateFilter.value = 'SP';
+                } else if ([...stateFilter.options].some(o => o.value === 'SÃO PAULO')) {
+                    stateFilter.value = 'SÃO PAULO';
+                } else {
+                    stateFilter.value = 'all'; // Fallback
+                }
+
+                // --- Type Filter ---
+                typeFilter.innerHTML = '<option value="all">Todos os Tipos</option>';
+                const types = [...new Set(events.map(e => e.type))];
+                types.forEach(type => {
+                    if(!type) return;
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type.toLowerCase().includes('prerelease') ? 'Pré Release' : type;
+                    typeFilter.appendChild(option);
+                });
+                if ([...typeFilter.options].some(o => o.value === currentType)) typeFilter.value = currentType;
+
+                // --- City Filter (Initial Population based on default State) ---
+                updateCityOptions(events, stateFilter.value);
 
                 // --- Month Filter ---
                 monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
@@ -600,8 +792,6 @@
                     monthFilter.appendChild(option);
                 });
                 if ([...monthFilter.options].some(o => o.value === currentMonth)) monthFilter.value = currentMonth;
-                
-                updateCityButtonLabel();
             }
 
             function updateCityButtonLabel() {
@@ -649,17 +839,14 @@
                         </a>`;
                 }
 
-                // Google Calendar Link Logic (Single Event)
-                const start = whenDate.toISOString().replace(/-|:|\.\d\d\d/g,""); // Format YYYYMMDDTHHmmSSZ (UTC)
+                const start = whenDate.toISOString().replace(/-|:|\.\d\d\d/g,"");
                 const end = new Date(whenDate.getTime() + (4*60*60*1000)).toISOString().replace(/-|:|\.\d\d\d/g,"");
                 
                 const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.name)}&dates=${start}/${end}&details=${encodeURIComponent("Tipo: " + event.type + "\nLoja: " + event.shop)}&location=${encodeURIComponent(event.shop + " - " + event.city)}`;
 
-                // Save button logic for details panel
                 const isSaved = savedEventIds.has(event.uniqueId);
                 const saveBtnText = isSaved ? 'Remover dos Salvos' : 'Salvar Evento';
                 
-                // SVG for PokeBall
                 const pokeSVG = `
                     <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
                         <path d="M21 12A9 9 0 0 0 3 12Z" class="${isSaved ? 'fill-pkmn-red stroke-none' : 'hidden'}" />
@@ -674,8 +861,6 @@
                     ? 'bg-gray-100 text-gray-800 border-2 border-pkmn-red' 
                     : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-300 hover:border-pkmn-red';
                 
-                // Google Maps Link Logic
-                // Prioritize address search over coordinates as requested
                 const mapQuery = encodeURIComponent(`${event.shop || ''} ${address} ${event.city || ''} ${event.state || ''}`);
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
@@ -703,10 +888,9 @@
                     </div>
                 `;
 
-                // Add listener to new button
                 document.getElementById('details-save-btn').addEventListener('click', () => {
                     toggleSaveEvent(event.uniqueId);
-                    showDetails(event); // Re-render details to update button state
+                    showDetails(event); 
                 });
 
                 detailsPanel.classList.remove('translate-x-full');
@@ -725,6 +909,7 @@
                 const searchTerm = searchInput.value.toLowerCase();
                 const selectedType = typeFilter.value;
                 const selectedMonth = monthFilter.value;
+                const selectedState = stateFilter.value;
                 
                 const isAllCities = cityAllCheckbox.checked;
                 const selectedCities = Array.from(document.querySelectorAll('.city-checkbox:checked')).map(cb => cb.value);
@@ -740,11 +925,19 @@
                             String(val).toLowerCase().includes(searchTerm)
                         );
                     const matchesType = selectedType === 'all' || event.type === selectedType;
+                    
+                    // State Filter Logic
+                    const eventState = (event.state || '').toString().trim().toUpperCase();
+                    const filterState = selectedState.toString().trim().toUpperCase();
+                    const matchesState = selectedState === 'all' || eventState === filterState || eventState.includes(filterState);
+
+                    // City Filter Logic (Dependent on state selection basically, but strictly checked here)
                     const matchesCity = isAllCities || selectedCities.includes(event.city);
+                    
                     const eventDate = new Date(event.when);
                     const matchesMonth = selectedMonth === 'all' || (isNaN(eventDate) ? false : eventDate.getUTCMonth() == selectedMonth);
                     
-                    return matchesSearch && matchesType && matchesCity && matchesMonth;
+                    return matchesSearch && matchesType && matchesState && matchesCity && matchesMonth;
                 });
                 
                 filtered.sort((a, b) => {
@@ -765,6 +958,11 @@
                 });
                 
                 renderTable(filtered);
+                
+                // Update Map if we are in map view
+                if (currentView === 'map') {
+                    updateMapMarkers(filtered);
+                }
             }
             
             function handleSort(e) {
@@ -792,11 +990,21 @@
             searchInput.addEventListener('input', filterAndSortEvents);
             typeFilter.addEventListener('change', filterAndSortEvents);
             monthFilter.addEventListener('change', filterAndSortEvents);
+            
+            // State Change Listener
+            stateFilter.addEventListener('change', () => {
+                updateCityOptions(allEvents, stateFilter.value);
+                filterAndSortEvents();
+            });
+
             closeDetailsButton.addEventListener('click', hideDetails);
             detailsOverlay.addEventListener('click', hideDetails);
             document.querySelector('thead').addEventListener('click', handleSort);
             retryButton.addEventListener('click', fetchEventsFromAPI);
             savedFilterBtn.addEventListener('click', toggleSavedFilter);
+            
+            viewListBtn.addEventListener('click', () => switchView('list'));
+            viewMapBtn.addEventListener('click', () => switchView('map'));
 
             // --- Multi-select Dropdown Events ---
             cityFilterBtn.addEventListener('click', (e) => {
