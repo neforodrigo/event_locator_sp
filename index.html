@@ -673,7 +673,11 @@
                 const saveBtnClass = isSaved 
                     ? 'bg-gray-100 text-gray-800 border-2 border-pkmn-red' 
                     : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-300 hover:border-pkmn-red';
-
+                
+                // Google Maps Link Logic
+                // Prioritize address search over coordinates as requested
+                const mapQuery = encodeURIComponent(`${event.shop || ''} ${address} ${event.city || ''} ${event.state || ''}`);
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
                 detailsContent.innerHTML = `
                     <p><strong class="font-semibold text-gray-600 w-28 inline-block">Tipo:</strong> ${event.type || '-'}</p>
@@ -691,7 +695,7 @@
                            Adicionar ao Google Agenda
                         </a>
 
-                        <a href="https://www.google.com/maps?q=${event.latitude},${event.longitude}" target="_blank" rel="noopener noreferrer" 
+                        <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" 
                            class="w-full text-center inline-block bg-pkmn-red text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition">
                            Ver no Google Maps
                         </a>
