@@ -300,6 +300,31 @@
             </div>
         </div>
 
+        <!-- Welcome Modal (Temporada 2027) -->
+        <div id="welcome-modal" class="fixed inset-0 flex items-center justify-center hidden z-50 p-4">
+            <div id="welcome-overlay" class="fixed inset-0 bg-black bg-opacity-50"></div>
+            <div class="bg-white rounded-xl shadow-2xl z-10 max-w-md w-full p-6 relative text-center border-t-4 border-pkmn-red transform transition-all">
+                <div class="mx-auto flex items-center justify-center w-14 h-14 rounded-full bg-red-100 mb-4 text-pkmn-red">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+                        <path d="M21 12A9 9 0 0 0 3 12Z" class="fill-pkmn-red stroke-none" />
+                        <circle cx="12" cy="12" r="9" />
+                        <path stroke-linecap="round" d="M3 12h18" />
+                        <circle cx="12" cy="12" r="3" class="fill-white" />
+                        <circle cx="12" cy="12" r="1.5" class="fill-gray-800 stroke-none" />
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-black text-pkmn-blue mb-2 uppercase tracking-wide">
+                    Boas-vindas à temporada 2027!
+                </h3>
+                <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+                    Prepare seus decks! Acompanhe todos os torneios oficiais de Pokémon TCG no Brasil, salve seus eventos favoritos e exporte diretamente para sua agenda externa.
+                </p>
+                <button id="close-welcome-btn" class="w-full bg-pkmn-red text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition shadow-md hover:shadow-lg uppercase tracking-wider text-sm">
+                    Vamos Lá!
+                </button>
+            </div>
+        </div>
+
         <!-- Saved Disclaimer Bar -->
         <div id="saved-disclaimer" class="fixed bottom-0 left-0 right-0 bg-yellow-50 border-t border-yellow-200 p-3 text-center text-yellow-800 text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] hidden z-30 flex flex-col sm:flex-row justify-center items-center gap-2">
             <div class="flex items-center space-x-2">
@@ -319,12 +344,18 @@
             // --- Configuration ---
             const API_URL = 'https://pokedata.ovh/events/api/_tcg/cups/challenges/pre/_country/BR'; 
             const STORAGE_KEY = 'pkmn_saved_events';
+            const WELCOME_KEY = 'pkmn_welcome_2027_seen';
 
             // --- DOM Elements ---
             const tableBody = document.getElementById('events-table-body');
             const searchInput = document.getElementById('search-input');
             const typeFilter = document.getElementById('type-filter');
             const stateFilter = document.getElementById('state-filter'); // New State Filter
+            
+            // Welcome Modal Elements
+            const welcomeModal = document.getElementById('welcome-modal');
+            const welcomeOverlay = document.getElementById('welcome-overlay');
+            const closeWelcomeBtn = document.getElementById('close-welcome-btn');
             
             // City filter elements
             const cityFilterWrapper = document.getElementById('city-filter-wrapper');
@@ -1149,6 +1180,21 @@
                 document.body.style.overflow = '';
             }
 
+            // --- Welcome Modal Functions ---
+            function checkWelcomeModal() {
+                const hasSeenWelcome = localStorage.getItem(WELCOME_KEY);
+                if (!hasSeenWelcome) {
+                    welcomeModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function hideWelcomeModal() {
+                welcomeModal.classList.add('hidden');
+                document.body.style.overflow = '';
+                localStorage.setItem(WELCOME_KEY, 'true');
+            }
+
             // --- Filtering and Sorting Logic ---
             function filterAndSortEvents() {
                 const searchTerm = searchInput.value.toLowerCase();
@@ -1254,6 +1300,10 @@
             closeExportModal.addEventListener('click', hideExportModal);
             exportOverlay.addEventListener('click', hideExportModal);
             
+            // Welcome Modal Listeners
+            closeWelcomeBtn.addEventListener('click', hideWelcomeModal);
+            welcomeOverlay.addEventListener('click', hideWelcomeModal);
+            
             viewListBtn.addEventListener('click', () => switchView('list'));
             viewMapBtn.addEventListener('click', () => switchView('map'));
 
@@ -1280,7 +1330,8 @@
                 }
             });
             
-            // Start Load
+            // Start Load & Welcome Check
+            checkWelcomeModal();
             fetchEventsFromAPI();
             updateSavedCountUI(); // Initial count
         });
