@@ -152,17 +152,26 @@
                     </button>
                 </div>
 
-                <!-- Saved Filter Button -->
-                <button id="saved-filter-btn" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red transition flex items-center justify-center space-x-2 font-medium group">
-                     <!-- Pokéball Icon for Filter Button -->
-                    <svg id="saved-filter-icon" class="w-5 h-5 group-hover:text-pkmn-red transition-colors" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
-                         <circle cx="12" cy="12" r="9" />
-                         <path d="M3 12h18" />
-                         <circle cx="12" cy="12" r="3" class="fill-white" />
-                    </svg>
-                    <span id="saved-filter-text">Ver Salvos</span>
-                    <span id="saved-count-badge" class="ml-1 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center hidden">0</span>
-                </button>
+                <!-- Action Buttons: Saved Filter & Export Calendar -->
+                <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+                    <button id="saved-filter-btn" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red transition flex items-center justify-center space-x-2 font-medium group">
+                         <!-- Pokéball Icon for Filter Button -->
+                        <svg id="saved-filter-icon" class="w-5 h-5 group-hover:text-pkmn-red transition-colors" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
+                             <circle cx="12" cy="12" r="9" />
+                             <path d="M3 12h18" />
+                             <circle cx="12" cy="12" r="3" class="fill-white" />
+                        </svg>
+                        <span id="saved-filter-text">Ver Salvos</span>
+                        <span id="saved-count-badge" class="ml-1 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center hidden">0</span>
+                    </button>
+
+                    <button id="export-saved-btn" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-blue hover:border-pkmn-blue transition flex items-center justify-center space-x-2 font-medium">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>Exportar Agenda</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Filter and Search Controls -->
@@ -271,10 +280,36 @@
         </div>
         <div id="details-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
 
+        <!-- Export Modal -->
+        <div id="export-modal" class="fixed inset-0 flex items-center justify-center hidden z-50 p-4">
+            <div id="export-overlay" class="fixed inset-0 bg-black bg-opacity-50"></div>
+            <div class="bg-white rounded-xl shadow-2xl z-10 max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto border-t-4 border-pkmn-blue">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-pkmn-blue flex items-center gap-2">
+                        <svg class="w-6 h-6 text-pkmn-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Exportar Eventos Salvos
+                    </h3>
+                    <button id="close-export-modal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div id="export-modal-body">
+                    <!-- Dynamic content injected by JS -->
+                </div>
+            </div>
+        </div>
+
         <!-- Saved Disclaimer Bar -->
-        <div id="saved-disclaimer" class="fixed bottom-0 left-0 right-0 bg-yellow-50 border-t border-yellow-200 p-3 text-center text-yellow-800 text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] hidden z-30 flex justify-center items-center space-x-2">
-            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span><strong>Atenção:</strong> Seus eventos favoritos são salvos localmente no cache deste navegador e não serão sincronizados com outros dispositivos.</span>
+        <div id="saved-disclaimer" class="fixed bottom-0 left-0 right-0 bg-yellow-50 border-t border-yellow-200 p-3 text-center text-yellow-800 text-sm shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] hidden z-30 flex flex-col sm:flex-row justify-center items-center gap-2">
+            <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span><strong>Atenção:</strong> Seus eventos favoritos são salvos localmente no cache deste navegador e não serão sincronizados com outros dispositivos.</span>
+            </div>
+            <button id="disclaimer-export-btn" class="bg-pkmn-blue text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-800 transition flex items-center space-x-1 flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>Exportar (.ics)</span>
+            </button>
         </div>
 
     </div>
@@ -305,6 +340,14 @@
             const savedFilterText = document.getElementById('saved-filter-text');
             const savedCountBadge = document.getElementById('saved-count-badge');
             const savedDisclaimer = document.getElementById('saved-disclaimer');
+            const exportSavedBtn = document.getElementById('export-saved-btn');
+            const disclaimerExportBtn = document.getElementById('disclaimer-export-btn');
+
+            // Export Modal Elements
+            const exportModal = document.getElementById('export-modal');
+            const exportOverlay = document.getElementById('export-overlay');
+            const closeExportModal = document.getElementById('close-export-modal');
+            const exportModalBody = document.getElementById('export-modal-body');
 
             // View Toggle Elements
             const viewListBtn = document.getElementById('view-list-btn');
@@ -888,6 +931,11 @@
                            Adicionar ao Google Agenda
                         </a>
 
+                        <button id="details-ics-btn" class="w-full text-center inline-flex items-center justify-center bg-gray-100 text-gray-700 font-bold py-2 px-4 rounded-lg border border-gray-300 hover:bg-gray-200 hover:text-pkmn-blue transition gap-2">
+                           <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                           Baixar Evento (.ics)
+                        </button>
+
                         <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" 
                            class="w-full text-center inline-block bg-pkmn-red text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition">
                            Ver no Google Maps
@@ -901,6 +949,12 @@
                     showDetails(event); 
                 });
 
+                document.getElementById('details-ics-btn').addEventListener('click', () => {
+                    const icsData = generateICS([event]);
+                    const cleanName = (event.name || 'evento').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    downloadICS(icsData, `${cleanName}.ics`);
+                });
+
                 detailsPanel.classList.remove('translate-x-full');
                 detailsOverlay.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
@@ -909,6 +963,189 @@
             function hideDetails() {
                 detailsPanel.classList.add('translate-x-full');
                 detailsOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            // --- Export Calendar Functions ---
+            function generateICS(events) {
+                let icsLines = [
+                    'BEGIN:VCALENDAR',
+                    'VERSION:2.0',
+                    'PRODID:-//Town Map Pokemon TCG//PT-BR',
+                    'CALSCALE:GREGORIAN',
+                    'METHOD:PUBLISH'
+                ];
+
+                events.forEach(evt => {
+                    const startDate = new Date(evt.when);
+                    if (isNaN(startDate)) return;
+
+                    const endDate = new Date(startDate.getTime() + 4 * 60 * 60 * 1000);
+
+                    const formatICSDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+
+                    const escapeICS = (str) => String(str || '')
+                        .replace(/\\/g, '\\\\')
+                        .replace(/;/g, '\\;')
+                        .replace(/,/g, '\\,')
+                        .replace(/\n/g, '\\n');
+
+                    const address = evt.address || evt.street_address || evt.street_adress || '';
+                    const location = [evt.shop, address, evt.city, evt.state].filter(Boolean).join(', ');
+                    
+                    let officialUrl = evt.pokemon_url || '';
+                    if (officialUrl && !officialUrl.startsWith('http')) {
+                        officialUrl = `https://www.pokemon.com/us/play-pokemon/pokemon-events/${officialUrl}`;
+                    }
+
+                    const descriptionParts = [
+                        `Tipo: ${evt.type || 'Evento'}`,
+                        `Loja: ${evt.shop || 'Não informada'}`,
+                        officialUrl ? `Página oficial: ${officialUrl}` : ''
+                    ].filter(Boolean).join('\n');
+
+                    icsLines.push(
+                        'BEGIN:VEVENT',
+                        `UID:${evt.uniqueId || Math.random().toString(36).substring(2)}@townmap`,
+                        `SUMMARY:${escapeICS(evt.name || 'Torneio Pokémon TCG')}`,
+                        `DESCRIPTION:${escapeICS(descriptionParts)}`,
+                        `LOCATION:${escapeICS(location)}`,
+                        `DTSTART:${formatICSDate(startDate)}`,
+                        `DTEND:${formatICSDate(endDate)}`,
+                        'STATUS:CONFIRMED',
+                        'END:VEVENT'
+                    );
+                });
+
+                icsLines.push('END:VCALENDAR');
+                return icsLines.join('\r\n');
+            }
+
+            function downloadICS(icsContent, filename = 'eventos_pokemon_salvos.ics') {
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }
+
+            function getGoogleCalendarUrl(evt) {
+                const startDate = new Date(evt.when);
+                if (isNaN(startDate)) return '#';
+                const endDate = new Date(startDate.getTime() + 4 * 60 * 60 * 1000);
+                const startStr = startDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+                const endStr = endDate.toISOString().replace(/-|:|\.\d\d\d/g, "");
+                const address = evt.address || evt.street_address || evt.street_adress || '';
+                const location = [evt.shop, address, evt.city, evt.state].filter(Boolean).join(', ');
+                const details = `Tipo: ${evt.type || ''}\nLoja: ${evt.shop || ''}`;
+                return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(evt.name || '')}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+            }
+
+            function openExportModal() {
+                const savedEvents = allEvents.filter(e => savedEventIds.has(e.uniqueId));
+
+                if (savedEvents.length === 0) {
+                    exportModalBody.innerHTML = `
+                        <div class="text-center py-6">
+                            <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><circle cx="12" cy="12" r="3" fill="white" /></svg>
+                            <h4 class="font-bold text-gray-700 text-lg mb-1">Nenhum evento salvo</h4>
+                            <p class="text-sm text-gray-500 max-w-xs mx-auto mb-4">Clique na Pokébola ao lado de qualquer torneio para favoritá-lo antes de exportar para a sua agenda.</p>
+                            <button id="close-modal-empty-btn" class="bg-pkmn-blue text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-800 transition">
+                                Entendido
+                            </button>
+                        </div>
+                    `;
+                    document.getElementById('export-modal').classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+
+                    const emptyBtn = document.getElementById('close-modal-empty-btn');
+                    if (emptyBtn) emptyBtn.addEventListener('click', hideExportModal);
+                    return;
+                }
+
+                const eventCountText = savedEvents.length === 1 ? '1 evento salvo' : `${savedEvents.length} eventos salvos`;
+                
+                let eventsListHTML = savedEvents.map(evt => {
+                    const dateObj = new Date(evt.when);
+                    const formattedDate = !isNaN(dateObj) ? dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+                    const gcalUrl = getGoogleCalendarUrl(evt);
+                    return `
+                        <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-blue-50/50 transition">
+                            <div class="min-w-0 pr-2">
+                                <p class="font-bold text-gray-800 text-xs truncate">${evt.name || 'Torneio'}</p>
+                                <p class="text-[11px] text-gray-500">${formattedDate} • ${evt.shop || ''} (${evt.city || ''})</p>
+                            </div>
+                            <a href="${gcalUrl}" target="_blank" rel="noopener noreferrer" 
+                               class="flex-shrink-0 bg-blue-500 text-white text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-600 transition flex items-center gap-1">
+                               <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                               Google Agenda
+                            </a>
+                        </div>
+                    `;
+                }).join('');
+
+                exportModalBody.innerHTML = `
+                    <p class="text-sm text-gray-600 mb-4">
+                        Você possui <strong class="text-pkmn-blue font-bold">${eventCountText}</strong>. Escolha a opção desejada para adicionar à sua agenda:
+                    </p>
+
+                    <div class="space-y-4">
+                        <!-- Option 1: Download .ics file -->
+                        <div class="p-4 bg-blue-50 border-2 border-pkmn-blue rounded-xl">
+                            <div class="flex items-start gap-3">
+                                <div class="bg-pkmn-blue text-white p-2 rounded-lg mt-0.5 flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </div>
+                                <div class="flex-grow">
+                                    <h4 class="font-bold text-pkmn-blue text-sm">Baixar Arquivo iCalendar (.ics)</h4>
+                                    <p class="text-xs text-gray-600 mt-0.5 mb-3">Formato universal compatível com Google Calendar, Apple Calendar (iPhone/Mac), Outlook, etc.</p>
+                                    <button id="download-ics-btn" class="w-full bg-pkmn-blue text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-blue-800 transition flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        Baixar Arquivo .ics (${savedEvents.length} eventos)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Instructions Accordion / Note for Google Calendar -->
+                        <details class="bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-600 p-3">
+                            <summary class="font-bold text-gray-700 cursor-pointer flex items-center justify-between">
+                                <span>Como importar o arquivo .ics no Google Agenda?</span>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </summary>
+                            <ol class="list-decimal list-inside space-y-1 mt-2 text-gray-600">
+                                <li>Baixe o arquivo <code>.ics</code> acima.</li>
+                                <li>Acesse o <a href="https://calendar.google.com" target="_blank" rel="noopener" class="text-pkmn-blue font-bold underline">Google Agenda</a> no computador.</li>
+                                <li>Clique no ícone de engrenagem no canto superior direito e selecione <strong>Configurações</strong>.</li>
+                                <li>No menu à esquerda, clique em <strong>Importar e exportar</strong>.</li>
+                                <li>Selecione o arquivo baixado e confirme a importação!</li>
+                            </ol>
+                        </details>
+
+                        <!-- Option 2: Individual links list -->
+                        <div class="border-t border-gray-200 pt-3">
+                            <h5 class="font-bold text-gray-700 text-xs uppercase tracking-wider mb-2">Adicionar Individualmente no Google Agenda</h5>
+                            <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                ${eventsListHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('export-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+
+                document.getElementById('download-ics-btn').addEventListener('click', () => {
+                    const icsData = generateICS(savedEvents);
+                    downloadICS(icsData);
+                });
+            }
+
+            function hideExportModal() {
+                document.getElementById('export-modal').classList.add('hidden');
                 document.body.style.overflow = '';
             }
 
@@ -1010,6 +1247,12 @@
             document.querySelector('thead').addEventListener('click', handleSort);
             retryButton.addEventListener('click', fetchEventsFromAPI);
             savedFilterBtn.addEventListener('click', toggleSavedFilter);
+            
+            // Export Modal Listeners
+            exportSavedBtn.addEventListener('click', openExportModal);
+            disclaimerExportBtn.addEventListener('click', openExportModal);
+            closeExportModal.addEventListener('click', hideExportModal);
+            exportOverlay.addEventListener('click', hideExportModal);
             
             viewListBtn.addEventListener('click', () => switchView('list'));
             viewMapBtn.addEventListener('click', () => switchView('map'));
