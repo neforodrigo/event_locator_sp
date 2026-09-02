@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import * as L from 'leaflet';
+import L from 'leaflet';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import type { TcgEvent } from '../types';
 import { markerColorClass } from '../lib/display';
@@ -14,7 +14,7 @@ function MapEffects({ events, visible }: { events: TcgEvent[]; visible: boolean 
   const map = useMap();
 
   useEffect(() => {
-    const legend = L.control({ position: 'bottomright' });
+    const legend = new L.Control({ position: 'bottomright' });
     legend.onAdd = () => {
       const div = L.DomUtil.create('div', 'info legend');
       div.innerHTML += '<i style="background: #e63946"></i> League Cup<br>';
