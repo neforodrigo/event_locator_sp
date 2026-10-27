@@ -32,7 +32,7 @@ export function Footer() {
             className="inline-flex flex-col items-center gap-3 group"
           >
             <span className="text-xs font-bold uppercase tracking-wider text-gray-500 group-hover:text-pkmn-blue transition-colors">
-              Patrocínio Pólen TCG
+              Apoio Pólen TCG
             </span>
             <img
               src="/polen-tcg.png"
