@@ -14,6 +14,7 @@ import { DetailsPanel } from './components/DetailsPanel';
 import { ExportModal } from './components/ExportModal';
 import { WelcomeModal } from './components/WelcomeModal';
 import { SavedDisclaimer } from './components/SavedDisclaimer';
+import { Pagination } from './components/Pagination';
 
 export default function App() {
   const { events, loading, error, reload } = useEvents();
@@ -24,6 +25,7 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState<TcgEvent | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [stateInitialized, setStateInitialized] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!events.length || stateInitialized) return;
@@ -48,6 +50,7 @@ export default function App() {
 
   function patchFilters(patch: Partial<FilterState>) {
     setFilters((prev) => ({ ...prev, ...patch }));
+    setPage(1);
   }
 
   function handleSort(key: SortKey) {
@@ -56,6 +59,19 @@ export default function App() {
       sortKey: key,
       sortDirection: prev.sortKey === key ? (prev.sortDirection === 'asc' ? 'desc' : 'asc') : 'asc',
     }));
+    setPage(1);
+  }
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / filters.pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pagedEvents = useMemo(() => {
+    const start = (currentPage - 1) * filters.pageSize;
+    return filtered.slice(start, start + filters.pageSize);
+  }, [filtered, currentPage, filters.pageSize]);
+
+  function goToPage(next: number) {
+    setPage(next);
+    document.getElementById('events-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   let emptyMessage = 'Nenhum evento encontrado.';
@@ -84,15 +100,23 @@ export default function App() {
           <Filters events={events} filters={filters} onChange={patchFilters} />
 
           {view === 'list' && (
-            <EventsTable
-              events={filtered}
-              savedIds={savedIds}
-              sortKey={filters.sortKey}
-              sortDirection={filters.sortDirection}
-              onSort={handleSort}
-              onSelect={setSelectedEvent}
-              onToggleSave={toggleSave}
-            />
+            <div id="events-results" className="scroll-mt-4">
+              <EventsTable
+                events={pagedEvents}
+                savedIds={savedIds}
+                sortKey={filters.sortKey}
+                sortDirection={filters.sortDirection}
+                onSort={handleSort}
+                onSelect={setSelectedEvent}
+                onToggleSave={toggleSave}
+              />
+              <Pagination
+                page={currentPage}
+                pageSize={filters.pageSize}
+                total={filtered.length}
+                onPageChange={goToPage}
+              />
+            </div>
           )}
 
           {mapMounted && (
