@@ -24,6 +24,23 @@ export function Footer() {
             por fornecer a API responsável por alimentar a página.
           </p>
         </div>
+        <div className="border-t border-gray-200 pt-5 mt-4">
+          <a
+            href="https://www.polentcg.com.br/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-col items-center gap-3 group"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 group-hover:text-pkmn-blue transition-colors">
+              Patrocínio Pólen TCG
+            </span>
+            <img
+              src="/polen-tcg.png"
+              alt="Pólen TCG — Card Games"
+              className="w-full max-w-md rounded-lg shadow-sm transition-transform group-hover:scale-[1.01]"
+            />
+          </a>
+        </div>
       </div>
     </footer>
   );
