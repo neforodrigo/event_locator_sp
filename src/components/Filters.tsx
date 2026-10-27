@@ -1,4 +1,4 @@
-import { MONTH_NAMES, type FilterState, type TcgEvent } from '../types';
+import { MONTH_NAMES, PAGE_SIZE_OPTIONS, type FilterState, type PageSize, type TcgEvent } from '../types';
 import { citiesForState, uniqueMonths, uniqueStates, uniqueTypes } from '../lib/filters';
 import { CityMultiSelect } from './CityMultiSelect';
 
@@ -89,6 +89,23 @@ export function Filters({ events, filters, onChange }: FiltersProps) {
             {months.map((monthIndex) => (
               <option key={monthIndex} value={String(monthIndex)}>
                 {MONTH_NAMES[monthIndex]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="page-size-filter" className="block text-sm font-medium text-gray-700 mb-1">
+            Resultados por página
+          </label>
+          <select
+            id="page-size-filter"
+            value={filters.pageSize}
+            onChange={(e) => onChange({ pageSize: Number(e.target.value) as PageSize })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition bg-white"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>
+                {size}
               </option>
             ))}
           </select>

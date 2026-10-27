@@ -21,6 +21,9 @@ export const MONTH_NAMES = [
 
 export type SortKey = 'name' | 'type' | 'when' | 'shop' | 'city';
 
+export const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+
 export interface TcgEvent {
   uniqueId: string;
   name?: string;
@@ -48,6 +51,7 @@ export interface FilterState {
   showSavedOnly: boolean;
   sortKey: SortKey;
   sortDirection: 'asc' | 'desc';
+  pageSize: PageSize;
 }
 
 export const defaultFilterState: FilterState = {
@@ -60,4 +64,5 @@ export const defaultFilterState: FilterState = {
   showSavedOnly: false,
   sortKey: 'when',
   sortDirection: 'asc',
+  pageSize: 20,
 };
