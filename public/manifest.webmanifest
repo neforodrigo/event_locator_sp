@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "Town Map",
+  "short_name": "Town Map",
+  "description": "Torneios oficiais de Pokémon TCG, VGC e Pokémon GO no Brasil.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07256a",
+  "theme_color": "#07256a",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
