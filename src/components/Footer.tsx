@@ -8,7 +8,8 @@ export function Footer() {
           <span className="font-bold text-pkmn-red">Nefo</span> com apoio de ferramentas Low-Code/No-Code.
         </p>
         <p className="mb-4">
-          O objetivo é auxiliar a comunidade de Pokémon TCG competitivo a se organizar para competições.
+          O objetivo é auxiliar a comunidade competitiva de Pokémon TCG, VGC e Pokémon GO a se organizar para
+          competições.
         </p>
         <div className="border-t border-gray-200 pt-4 mt-4">
           <p className="text-xs">

@@ -1,5 +1,26 @@
 export const API_URL =
-  'https://pokedata.ovh/events/api/_tcg/cups/challenges/pre/_country/BR';
+  'https://pokedata.ovh/events/api/_tcg/cups/challenges/pre/_vg/cups/challenges/_go/cups/challenges/_country/BR';
+
+export type Product = 'tcg' | 'vg' | 'go';
+
+export const PRODUCTS: Product[] = ['tcg', 'vg', 'go'];
+
+export const PRODUCT_LABELS: Record<Product, string> = {
+  tcg: 'TCG',
+  vg: 'VGC',
+  go: 'Pokémon GO',
+};
+
+export const PRODUCT_SUBTITLES: Record<Product, string> = {
+  tcg: 'Torneios de Pokémon TCG no Brasil',
+  vg: 'Torneios de Pokémon VGC no Brasil',
+  go: 'Torneios de Pokémon GO no Brasil',
+};
+
+export function normalizeProduct(value: unknown): Product {
+  if (value === 'vg' || value === 'go' || value === 'tcg') return value;
+  return 'tcg';
+}
 
 export const STORAGE_KEY = 'pkmn_saved_events';
 export const WELCOME_KEY = 'pkmn_welcome_2027_seen';
@@ -38,6 +59,7 @@ export interface TcgEvent {
   street_address?: string;
   street_adress?: string;
   pokemon_url?: string;
+  product?: Product;
   [key: string]: unknown;
 }
 
