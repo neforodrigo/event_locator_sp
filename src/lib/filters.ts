@@ -1,4 +1,33 @@
-import { normalizeProduct, type FilterState, type Product, type SortKey, type TcgEvent } from '../types';
+import {
+  WEEKDAY_ABBR,
+  normalizeProduct,
+  type FilterState,
+  type Product,
+  type SortKey,
+  type TcgEvent,
+} from '../types';
+
+export function eventUtcDate(when?: string): Date | null {
+  const date = new Date(when || '');
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function eventUtcDateKey(when?: string): string | null {
+  const date = eventUtcDate(when);
+  if (!date) return null;
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function formatDateFilterLabel(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  if (!year || !month || !day) return isoDate;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const weekday = WEEKDAY_ABBR[date.getUTCDay()];
+  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')} (${weekday})`;
+}
 
 export function eventsForProduct(events: TcgEvent[], product: Product): TcgEvent[] {
   return events.filter((event) => normalizeProduct(event.product) === product);
@@ -28,12 +57,26 @@ export function uniqueMonths(events: TcgEvent[]): number[] {
     ...new Set(
       events
         .map((e) => {
-          const date = new Date(e.when || '');
-          return Number.isNaN(date.getTime()) ? null : date.getUTCMonth();
+          const date = eventUtcDate(e.when);
+          return date ? date.getUTCMonth() : null;
         })
         .filter((m): m is number => m !== null),
     ),
   ].sort((a, b) => a - b);
+}
+
+export function uniqueDates(events: TcgEvent[], month: string): string[] {
+  const pool =
+    month === 'all'
+      ? events
+      : events.filter((event) => {
+          const date = eventUtcDate(event.when);
+          return date ? String(date.getUTCMonth()) === month : false;
+        });
+
+  return [
+    ...new Set(pool.map((event) => eventUtcDateKey(event.when)).filter((key): key is string => Boolean(key))),
+  ].sort();
 }
 
 export function citiesForState(events: TcgEvent[], selectedState: string): string[] {
@@ -68,12 +111,27 @@ export function filterAndSortEvents(
       Object.values(event).some((val) => String(val).toLowerCase().includes(searchTerm));
     const matchesType = filters.type === 'all' || event.type === filters.type;
     const matchesCity = filters.allCities || filters.selectedCities.includes(event.city || '');
-    const eventDate = new Date(event.when || '');
+    const eventDate = eventUtcDate(event.when);
     const matchesMonth =
-      filters.month === 'all' ||
-      (Number.isNaN(eventDate.getTime()) ? false : String(eventDate.getUTCMonth()) === filters.month);
+      filters.month === 'all' || (eventDate ? String(eventDate.getUTCMonth()) === filters.month : false);
+    const matchesWeekday =
+      filters.selectedWeekdays.length === 0 ||
+      (eventDate ? filters.selectedWeekdays.includes(eventDate.getUTCDay()) : false);
+    const dateKey = eventUtcDateKey(event.when);
+    const rangeStart = filters.dateStart;
+    const rangeEnd = filters.dateEnd || filters.dateStart;
+    const matchesDate =
+      !rangeStart || (dateKey ? dateKey >= rangeStart && dateKey <= rangeEnd : false);
 
-    return matchesSearch && matchesType && matchesState(event, filters.state) && matchesCity && matchesMonth;
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesState(event, filters.state) &&
+      matchesCity &&
+      matchesMonth &&
+      matchesWeekday &&
+      matchesDate
+    );
   });
 
   const key: SortKey = filters.sortKey;
