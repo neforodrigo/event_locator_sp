@@ -28,18 +28,18 @@ export function eventTypeDisplay(type?: string): {
 } {
   let abbreviatedType = type || 'Evento';
   let fullTypeName = type || 'Evento';
-  let typeClass = 'bg-gray-100 text-gray-800';
+  let typeClass = 'bg-slate-100 text-pkmn-muted';
 
   if (fullTypeName === 'League Challenge') {
     abbreviatedType = 'Challenge';
-    typeClass = 'bg-blue-100 text-blue-800';
+    typeClass = 'bg-sky-100 text-sky-700';
   } else if (fullTypeName === 'League Cup') {
     abbreviatedType = 'Cup';
-    typeClass = 'bg-red-100 text-red-800';
+    typeClass = 'bg-rose-100 text-rose-700';
   } else if (fullTypeName.toLowerCase().includes('prerelease')) {
     abbreviatedType = 'Pré Release';
     fullTypeName = 'Pré Release';
-    typeClass = 'bg-green-100 text-green-800';
+    typeClass = 'bg-emerald-100 text-emerald-700';
   }
 
   return { abbreviatedType, fullTypeName, typeClass };

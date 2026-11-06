@@ -11,6 +11,9 @@ interface ToolbarProps {
   advancedFilters: ReactNode;
 }
 
+const ghostButton =
+  'h-10 px-3 text-sm font-medium rounded-lg transition flex items-center justify-center gap-2 w-full sm:w-auto';
+
 export function Toolbar({
   view,
   onViewChange,
@@ -21,13 +24,15 @@ export function Toolbar({
   advancedFilters,
 }: ToolbarProps) {
   return (
-    <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-200 pb-4">
-      <div className="flex bg-gray-100 p-1 rounded-lg">
+    <div className="mb-5 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+      <div className="flex self-start bg-white p-1 rounded-full shadow-sm">
         <button
           type="button"
           onClick={() => onViewChange('list')}
-          className={`px-4 py-2 rounded-md text-sm font-bold transition ${
-            view === 'list' ? 'shadow-sm bg-white text-pkmn-blue' : 'text-gray-500 hover:text-pkmn-blue'
+          className={`px-5 h-9 rounded-full text-sm font-bold transition ${
+            view === 'list'
+              ? 'bg-pkmn-blue text-pkmn-gold shadow-sm'
+              : 'text-pkmn-muted hover:text-pkmn-ink'
           }`}
         >
           Lista
@@ -35,33 +40,35 @@ export function Toolbar({
         <button
           type="button"
           onClick={() => onViewChange('map')}
-          className={`px-4 py-2 rounded-md text-sm font-bold transition ${
-            view === 'map' ? 'shadow-sm bg-white text-pkmn-blue' : 'text-gray-500 hover:text-pkmn-blue'
+          className={`px-5 h-9 rounded-full text-sm font-bold transition ${
+            view === 'map'
+              ? 'bg-pkmn-blue text-pkmn-gold shadow-sm'
+              : 'text-pkmn-muted hover:text-pkmn-ink'
           }`}
         >
           Mapa
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+      <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-1.5">
         {advancedFilters}
         <button
           type="button"
           onClick={onToggleSaved}
-          className={`w-full sm:w-auto px-4 py-2 border rounded-lg transition flex items-center justify-center space-x-2 font-medium group ${
+          className={`${ghostButton} ${
             showSavedOnly
-              ? 'bg-pkmn-red text-white border-pkmn-red'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-pkmn-red hover:border-pkmn-red'
+              ? 'bg-pkmn-red text-white'
+              : 'text-pkmn-muted hover:text-pkmn-ink hover:bg-white/70'
           }`}
         >
           <PokeballIcon
-            className={`w-5 h-5 transition-colors ${showSavedOnly ? '' : 'group-hover:text-pkmn-red'}`}
+            className={`w-4 h-4 ${showSavedOnly ? '' : 'text-pkmn-muted'}`}
           />
-          <span>{showSavedOnly ? 'Mostrando Salvos' : 'Ver Salvos'}</span>
+          <span>{showSavedOnly ? 'Mostrando salvos' : 'Ver salvos'}</span>
           {savedCount > 0 && (
             <span
-              className={`ml-1 text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center ${
-                showSavedOnly ? 'bg-white text-pkmn-red' : 'bg-gray-200 text-gray-600'
+              className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+                showSavedOnly ? 'bg-white/20 text-white' : 'bg-white text-pkmn-muted'
               }`}
             >
               {savedCount}
@@ -72,17 +79,17 @@ export function Toolbar({
         <button
           type="button"
           onClick={onExport}
-          className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-pkmn-blue hover:border-pkmn-blue transition flex items-center justify-center space-x-2 font-medium"
+          className={`${ghostButton} text-pkmn-muted hover:text-pkmn-ink hover:bg-white/70`}
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth="2"
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              strokeWidth="1.75"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <span>Exportar Agenda</span>
+          <span>Exportar agenda</span>
         </button>
       </div>
     </div>

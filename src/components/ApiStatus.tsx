@@ -7,7 +7,7 @@ export function ApiStatus({ error, onRetry }: ApiStatusProps) {
   if (!error) return null;
 
   return (
-    <div className="mb-6 p-4 border-l-4 border-pkmn-red bg-red-50 rounded-r-lg flex items-center justify-between">
+    <div className="mb-6 p-4 ring-1 ring-pkmn-red/20 bg-rose-50 rounded-xl flex items-center justify-between">
       <div className="flex items-center">
         <div>
           <p className="font-bold text-red-700">Erro ao carregar dados</p>

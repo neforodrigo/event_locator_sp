@@ -52,10 +52,10 @@ export function AdvancedFilters({ events, filters, onChange }: AdvancedFiltersPr
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className={`w-full sm:w-auto px-4 py-2 border rounded-lg transition flex items-center justify-center space-x-2 font-medium ${
+        className={`w-full sm:w-auto h-10 px-3 rounded-lg transition flex items-center justify-center gap-2 text-sm font-medium ${
           active || open
-            ? 'bg-pkmn-blue text-white border-pkmn-blue'
-            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-pkmn-blue hover:border-pkmn-blue'
+            ? 'bg-pkmn-blue text-pkmn-gold'
+            : 'text-pkmn-muted hover:text-pkmn-ink hover:bg-white/70'
         }`}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,8 +69,8 @@ export function AdvancedFilters({ events, filters, onChange }: AdvancedFiltersPr
         <span>Filtros avançados</span>
         {active && (
           <span
-            className={`text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center ${
-              open || active ? 'bg-white text-pkmn-blue' : 'bg-gray-200 text-gray-600'
+            className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+              open || active ? 'bg-white/20 text-white' : 'bg-black/5 text-pkmn-muted'
             }`}
           >
             {activeCount}
@@ -79,7 +79,7 @@ export function AdvancedFilters({ events, filters, onChange }: AdvancedFiltersPr
       </button>
 
       {open && (
-        <div className="absolute z-30 right-0 mt-2 w-[min(100vw-2rem,24rem)] bg-white border border-gray-200 rounded-xl shadow-xl p-4 space-y-4">
+        <div className="absolute z-30 right-0 mt-2 w-[min(100vw-2rem,24rem)] bg-pkmn-paper ring-1 ring-black/10 rounded-2xl shadow-lg p-4 space-y-4">
           <div>
             <span className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Dia da Semana</span>
             <div className="flex h-[42px] rounded-lg border border-gray-300 overflow-hidden bg-white">
