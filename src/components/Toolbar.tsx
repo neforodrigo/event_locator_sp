@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { PokeballIcon } from './PokeballIcon';
 
 interface ToolbarProps {
@@ -7,6 +8,7 @@ interface ToolbarProps {
   savedCount: number;
   onToggleSaved: () => void;
   onExport: () => void;
+  advancedFilters: ReactNode;
 }
 
 export function Toolbar({
@@ -16,6 +18,7 @@ export function Toolbar({
   savedCount,
   onToggleSaved,
   onExport,
+  advancedFilters,
 }: ToolbarProps) {
   return (
     <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-200 pb-4">
@@ -41,6 +44,7 @@ export function Toolbar({
       </div>
 
       <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+        {advancedFilters}
         <button
           type="button"
           onClick={onToggleSaved}

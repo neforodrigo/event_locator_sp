@@ -25,6 +25,20 @@ export function normalizeProduct(value: unknown): Product {
 export const STORAGE_KEY = 'pkmn_saved_events';
 export const WELCOME_KEY = 'pkmn_welcome_2027_seen';
 
+export const WEEKDAY_LABELS = [
+  'Domingo',
+  'Segunda',
+  'Terça',
+  'Quarta',
+  'Quinta',
+  'Sexta',
+  'Sábado',
+] as const;
+
+export const WEEKDAY_SHORT = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'] as const;
+
+export const WEEKDAY_ABBR = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'] as const;
+
 export const MONTH_NAMES = [
   'Janeiro',
   'Fevereiro',
@@ -70,6 +84,9 @@ export interface FilterState {
   selectedCities: string[];
   allCities: boolean;
   month: string;
+  selectedWeekdays: number[];
+  dateStart: string;
+  dateEnd: string;
   showSavedOnly: boolean;
   sortKey: SortKey;
   sortDirection: 'asc' | 'desc';
@@ -83,6 +100,9 @@ export const defaultFilterState: FilterState = {
   selectedCities: [],
   allCities: true,
   month: 'all',
+  selectedWeekdays: [],
+  dateStart: '',
+  dateEnd: '',
   showSavedOnly: false,
   sortKey: 'when',
   sortDirection: 'asc',

@@ -7,6 +7,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ApiStatus } from './components/ApiStatus';
 import { Toolbar } from './components/Toolbar';
+import { AdvancedFilters } from './components/AdvancedFilters';
 import { Filters } from './components/Filters';
 import { EventsTable } from './components/EventsTable';
 import { EventsMap } from './components/EventsMap';
@@ -65,6 +66,9 @@ export default function App() {
       type: 'all',
       allCities: true,
       selectedCities: [],
+      selectedWeekdays: [],
+      dateStart: '',
+      dateEnd: '',
       state: pickDefaultState(states),
     }));
   }
@@ -117,6 +121,9 @@ export default function App() {
             savedCount={savedCount}
             onToggleSaved={() => patchFilters({ showSavedOnly: !filters.showSavedOnly })}
             onExport={() => setExportOpen(true)}
+            advancedFilters={
+              <AdvancedFilters events={eventsByProduct} filters={filters} onChange={patchFilters} />
+            }
           />
           <Filters events={eventsByProduct} filters={filters} onChange={patchFilters} />
 
