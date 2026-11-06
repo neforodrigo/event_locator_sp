@@ -1,4 +1,15 @@
-import type { TcgEvent } from '../types';
+import { normalizeProduct, type TcgEvent } from '../types';
+
+function eventFallbackName(event: TcgEvent): string {
+  switch (normalizeProduct(event.product)) {
+    case 'vg':
+      return 'Torneio Pokémon VGC';
+    case 'go':
+      return 'Torneio Pokémon GO';
+    default:
+      return 'Torneio Pokémon TCG';
+  }
+}
 
 function formatICSDate(date: Date): string {
   return date.toISOString().replace(/-|:|\.\d\d\d/g, '');
@@ -26,7 +37,7 @@ export function generateICS(events: TcgEvent[]): string {
   const icsLines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Town Map Pokemon TCG//PT-BR',
+    'PRODID:-//Town Map Pokemon//PT-BR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
   ];
@@ -51,7 +62,7 @@ export function generateICS(events: TcgEvent[]): string {
     icsLines.push(
       'BEGIN:VEVENT',
       `UID:${evt.uniqueId || Math.random().toString(36).substring(2)}@townmap`,
-      `SUMMARY:${escapeICS(evt.name || 'Torneio Pokémon TCG')}`,
+      `SUMMARY:${escapeICS(evt.name || eventFallbackName(evt))}`,
       `DESCRIPTION:${escapeICS(descriptionParts)}`,
       `LOCATION:${escapeICS(location)}`,
       `DTSTART:${formatICSDate(startDate)}`,
@@ -85,7 +96,7 @@ export function getGoogleCalendarUrl(evt: TcgEvent): string {
   const address = eventAddress(evt);
   const location = [evt.shop, address, evt.city, evt.state].filter(Boolean).join(', ');
   const details = `Tipo: ${evt.type || ''}\nLoja: ${evt.shop || ''}`;
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(evt.name || '')}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(evt.name || eventFallbackName(evt))}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
 }
 
 export function googleMapsUrl(event: TcgEvent): string {

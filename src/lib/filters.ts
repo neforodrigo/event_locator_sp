@@ -1,4 +1,8 @@
-import type { FilterState, SortKey, TcgEvent } from '../types';
+import { normalizeProduct, type FilterState, type Product, type SortKey, type TcgEvent } from '../types';
+
+export function eventsForProduct(events: TcgEvent[], product: Product): TcgEvent[] {
+  return events.filter((event) => normalizeProduct(event.product) === product);
+}
 
 export function eventStateCode(event: TcgEvent): string {
   return (event.state || '').toString().trim().toUpperCase();

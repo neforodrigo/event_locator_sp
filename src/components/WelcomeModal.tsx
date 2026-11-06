@@ -36,8 +36,8 @@ export function WelcomeModal() {
           Boas-vindas à temporada 2027!
         </h3>
         <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-          Prepare seus decks! Acompanhe todos os torneios oficiais de Pokémon TCG no Brasil, salve seus eventos
-          favoritos e exporte diretamente para sua agenda externa.
+          Prepare seus decks e times! Acompanhe os torneios oficiais de Pokémon TCG, VGC e Pokémon GO no Brasil,
+          salve seus eventos favoritos e exporte diretamente para sua agenda externa.
         </p>
         <button
           type="button"

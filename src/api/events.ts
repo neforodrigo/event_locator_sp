@@ -1,10 +1,11 @@
-import { API_URL, type TcgEvent } from '../types';
+import { API_URL, normalizeProduct, type TcgEvent } from '../types';
 
-function makeUniqueId(event: Record<string, unknown>, index: number): string {
+function makeUniqueId(event: Record<string, unknown>, index: number, product: string): string {
   const rawId = `${event.name || ''}_${event.when || ''}_${event.shop || ''}`
     .replace(/\s/g, '')
     .toLowerCase();
-  return rawId || `event_${index}`;
+  const base = rawId || `event_${index}`;
+  return product === 'tcg' ? base : `${product}_${base}`;
 }
 
 export async function fetchEventsFromAPI(): Promise<TcgEvent[]> {
@@ -29,8 +30,12 @@ export async function fetchEventsFromAPI(): Promise<TcgEvent[]> {
     throw new Error('A API retornou uma lista vazia de eventos no Brasil.');
   }
 
-  return eventsArray.map((event, index) => ({
-    ...event,
-    uniqueId: makeUniqueId(event, index),
-  }));
+  return eventsArray.map((event, index) => {
+    const product = normalizeProduct(event.product);
+    return {
+      ...event,
+      product,
+      uniqueId: makeUniqueId(event, index, product),
+    };
+  });
 }

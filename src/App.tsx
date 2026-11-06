@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { defaultFilterState, type FilterState, type SortKey, type TcgEvent } from './types';
-import { filterAndSortEvents, pickDefaultState, uniqueStates } from './lib/filters';
+import { defaultFilterState, type FilterState, type Product, type SortKey, type TcgEvent } from './types';
+import { eventsForProduct, filterAndSortEvents, pickDefaultState, uniqueStates } from './lib/filters';
 import { useEvents } from './hooks/useEvents';
 import { useSavedEvents } from './hooks/useSavedEvents';
 import { Header } from './components/Header';
@@ -20,6 +20,7 @@ export default function App() {
   const { events, loading, error, reload } = useEvents();
   const { savedIds, toggleSave } = useSavedEvents();
   const [filters, setFilters] = useState<FilterState>(defaultFilterState);
+  const [product, setProduct] = useState<Product>('tcg');
   const [view, setView] = useState<'list' | 'map'>('list');
   const [mapMounted, setMapMounted] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<TcgEvent | null>(null);
@@ -27,26 +28,46 @@ export default function App() {
   const [stateInitialized, setStateInitialized] = useState(false);
   const [page, setPage] = useState(1);
 
+  const eventsByProduct = useMemo(() => eventsForProduct(events, product), [events, product]);
+
   useEffect(() => {
-    if (!events.length || stateInitialized) return;
-    const states = uniqueStates(events);
+    if (!eventsByProduct.length || stateInitialized) return;
+    const states = uniqueStates(eventsByProduct);
     setFilters((prev) => ({ ...prev, state: pickDefaultState(states) }));
     setStateInitialized(true);
-  }, [events, stateInitialized]);
+  }, [eventsByProduct, stateInitialized]);
 
   useEffect(() => {
     if (view === 'map') setMapMounted(true);
   }, [view]);
 
   const filtered = useMemo(
-    () => filterAndSortEvents(events, filters, savedIds),
-    [events, filters, savedIds],
+    () => filterAndSortEvents(eventsByProduct, filters, savedIds),
+    [eventsByProduct, filters, savedIds],
   );
 
   const savedEvents = useMemo(
     () => events.filter((e) => savedIds.has(e.uniqueId)),
     [events, savedIds],
   );
+
+  const savedCount = useMemo(
+    () => eventsByProduct.filter((e) => savedIds.has(e.uniqueId)).length,
+    [eventsByProduct, savedIds],
+  );
+
+  function handleProductChange(next: Product) {
+    setProduct(next);
+    setPage(1);
+    const states = uniqueStates(eventsForProduct(events, next));
+    setFilters((prev) => ({
+      ...prev,
+      type: 'all',
+      allCities: true,
+      selectedCities: [],
+      state: pickDefaultState(states),
+    }));
+  }
 
   function patchFilters(patch: Partial<FilterState>) {
     setFilters((prev) => ({ ...prev, ...patch }));
@@ -75,9 +96,9 @@ export default function App() {
   }
 
   let emptyMessage = 'Nenhum evento encontrado.';
-  if (!loading && events.length === 0 && !error) {
+  if (!loading && eventsByProduct.length === 0 && !error) {
     emptyMessage = 'Conectado à API, mas nenhum evento encontrado no momento.';
-  } else if (events.length > 0 && filtered.length === 0) {
+  } else if (eventsByProduct.length > 0 && filtered.length === 0) {
     emptyMessage = filters.showSavedOnly
       ? 'Você ainda não salvou nenhum evento.'
       : 'Nenhum resultado encontrado para os filtros aplicados.';
@@ -86,18 +107,18 @@ export default function App() {
   return (
     <div className="bg-pkmn-bg text-gray-800 pb-20 min-h-screen">
       <div className="container mx-auto p-2 sm:p-4 md:p-8">
-        <Header />
+        <Header product={product} onProductChange={handleProductChange} />
         <main className="bg-white rounded-xl shadow-lg p-3 sm:p-6 relative">
           <ApiStatus error={error} onRetry={reload} />
           <Toolbar
             view={view}
             onViewChange={setView}
             showSavedOnly={filters.showSavedOnly}
-            savedCount={savedIds.size}
+            savedCount={savedCount}
             onToggleSaved={() => patchFilters({ showSavedOnly: !filters.showSavedOnly })}
             onExport={() => setExportOpen(true)}
           />
-          <Filters events={events} filters={filters} onChange={patchFilters} />
+          <Filters events={eventsByProduct} filters={filters} onChange={patchFilters} />
 
           {view === 'list' && (
             <div id="events-results" className="scroll-mt-4">
