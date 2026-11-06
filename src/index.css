@@ -1,18 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 @import 'tailwindcss';
 @import 'leaflet/dist/leaflet.css';
 
 @theme {
-  --color-pkmn-blue: #1c3b69;
+  --color-pkmn-blue: #0b2d6b;
   --color-pkmn-red: #e63946;
-  --color-pkmn-bg: #e8f0f8;
-  --color-pkmn-header-bg: #d6e2ef;
-  --color-pkmn-light-blue: #a8dadc;
-  --font-sans: 'Poppins', sans-serif;
+  --color-pkmn-bg: #07256a;
+  --color-pkmn-header-bg: #0b2d6b;
+  --color-pkmn-light-blue: #3b82f6;
+  --color-pkmn-paper: #eef2f8;
+  --color-pkmn-gold: #f5c518;
+  --color-pkmn-ink: #1a1f36;
+  --color-pkmn-muted: #6b7394;
+  --font-sans: 'DM Sans', sans-serif;
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1f36;
+  background: #07256a;
+}
+
+.app-shell {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -8%, rgba(150, 200, 255, 0.4), transparent 58%),
+    radial-gradient(ellipse 70% 50% at 88% 8%, rgba(18, 70, 180, 0.45), transparent 58%),
+    linear-gradient(165deg, #0a3c94 0%, #08307c 38%, #061e58 100%);
+}
+
+.app-shell::before {
+  content: '';
+  position: absolute;
+  inset: -30% -20% 35%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from -48deg at 50% 8%,
+    rgba(255, 255, 255, 0.16) 0deg 4deg,
+    transparent 8deg 18deg
+  );
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 10%, #000 8%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 10%, #000 8%, transparent 70%);
+  filter: blur(10px);
+  opacity: 0.7;
 }
 
 ::-webkit-scrollbar {
@@ -21,28 +50,27 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #aaa;
+  background: #3d5ea8;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #888;
+  background: #f5c518;
 }
 
 .table-row-hover:hover {
-  background-color: #f0f0f0;
+  background-color: rgba(11, 45, 107, 0.04);
 }
 
 .sort-indicator::after {
   content: '';
   display: inline-block;
   margin-left: 0.5rem;
-  opacity: 0.5;
+  opacity: 0.4;
   font-size: 0.65em;
   vertical-align: middle;
 }
@@ -50,21 +78,21 @@ body {
 th[data-sort-direction='asc'] .sort-indicator::after {
   content: '▲';
   opacity: 1;
-  color: #e63946;
+  color: #f5c518;
 }
 
 th[data-sort-direction='desc'] .sort-indicator::after {
   content: '▼';
   opacity: 1;
-  color: #e63946;
+  color: #f5c518;
 }
 
 .loader {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #e63946;
+  border: 3px solid #e8eef3;
+  border-top: 3px solid #f5c518;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   animation: spin 1s linear infinite;
   display: inline-block;
   vertical-align: middle;
@@ -85,17 +113,17 @@ th[data-sort-direction='desc'] .sort-indicator::after {
 }
 
 .poke-btn:active {
-  transform: scale(1.2) rotate(20deg);
+  transform: scale(1.15);
 }
 
 .info.legend {
-  background: white;
+  background: #eef2f8;
   padding: 6px 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(11, 45, 107, 0.16);
   font-size: 12px;
   line-height: 18px;
-  color: #555;
+  color: #1a1f36;
 }
 
 .info.legend i {

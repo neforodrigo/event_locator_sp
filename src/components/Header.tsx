@@ -1,4 +1,10 @@
-import { PRODUCT_LABELS, PRODUCT_SUBTITLES, PRODUCTS, type Product } from '../types';
+import { PRODUCT_LABELS, PRODUCTS, type Product } from '../types';
+
+const PRODUCT_ACCENT: Record<Product, string> = {
+  tcg: 'TCG',
+  vg: 'VGC',
+  go: 'GO',
+};
 
 interface HeaderProps {
   product: Product;
@@ -7,34 +13,44 @@ interface HeaderProps {
 
 export function Header({ product, onProductChange }: HeaderProps) {
   return (
-    <header className="text-center mb-6 p-3 sm:p-6 bg-pkmn-header-bg rounded-xl border-b-4 border-pkmn-light-blue">
-      <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-pkmn-blue uppercase tracking-widest">
-        TOWN MAP
-      </h1>
-      <p className="text-xs sm:text-md text-gray-600 mt-1 sm:mt-3 tracking-wider">
-        {PRODUCT_SUBTITLES[product]}
-      </p>
-      <div
-        className="mt-4 inline-flex bg-white/80 p-1 rounded-lg border border-gray-200"
-        role="tablist"
-        aria-label="Produto"
-      >
-        {PRODUCTS.map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            aria-selected={product === item}
-            onClick={() => onProductChange(item)}
-            className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-bold transition ${
-              product === item
-                ? 'shadow-sm bg-pkmn-blue text-white'
-                : 'text-gray-500 hover:text-pkmn-blue'
-            }`}
-          >
-            {PRODUCT_LABELS[item]}
-          </button>
-        ))}
+    <header className="mb-8 flex flex-col items-center text-center gap-4">
+      <img
+        src="/town-map-logo.png"
+        alt="Town Map"
+        className="w-full max-w-md sm:max-w-lg md:max-w-xl"
+      />
+      <div>
+        <h1 className="sr-only">Town Map</h1>
+        <p className="flex items-center justify-center gap-3 text-base sm:text-lg font-bold text-white">
+          <span className="hidden sm:block h-[3px] w-10 rounded-full bg-pkmn-gold" aria-hidden />
+          <span>
+            Torneios de Pokémon{' '}
+            <span className="text-pkmn-gold">{PRODUCT_ACCENT[product]}</span>
+            {' '}no Brasil
+          </span>
+          <span className="hidden sm:block h-[3px] w-10 rounded-full bg-pkmn-gold" aria-hidden />
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2.5" role="tablist" aria-label="Produto">
+        {PRODUCTS.map((item) => {
+          const selected = product === item;
+          return (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => onProductChange(item)}
+              className={`px-5 sm:px-6 py-2 rounded-full text-sm font-bold transition ${
+                selected
+                  ? 'bg-pkmn-gold text-pkmn-ink shadow-[0_4px_12px_rgba(245,197,24,0.35)]'
+                  : 'border-2 border-[#163a7a] bg-[#0a2a66]/70 text-white hover:border-white/70 hover:bg-[#0a2a66]'
+              }`}
+            >
+              {PRODUCT_LABELS[item]}
+            </button>
+          );
+        })}
       </div>
     </header>
   );

@@ -25,7 +25,7 @@ export function DetailsPanel({ event, saved, onClose, onToggleSave }: DetailsPan
   if (!event) {
     return (
       <>
-        <div className="fixed inset-y-0 right-0 w-full sm:w-2/3 md:w-1/2 lg:w-1/3 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto border-l-4 border-pkmn-blue" />
+        <div className="fixed inset-y-0 right-0 w-full sm:w-2/3 md:w-1/2 lg:w-1/3 bg-pkmn-paper shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto ring-1 ring-black/5" />
         <div className="fixed inset-0 bg-black bg-opacity-50 hidden z-40" />
       </>
     );
@@ -41,7 +41,7 @@ export function DetailsPanel({ event, saved, onClose, onToggleSave }: DetailsPan
 
   return (
     <>
-      <div className="fixed inset-y-0 right-0 w-full sm:w-2/3 md:w-1/2 lg:w-1/3 bg-white shadow-2xl transform translate-x-0 transition-transform duration-300 ease-in-out z-50 overflow-y-auto border-l-4 border-pkmn-blue">
+      <div className="fixed inset-y-0 right-0 w-full sm:w-2/3 md:w-1/2 lg:w-1/3 bg-pkmn-paper shadow-xl transform translate-x-0 transition-transform duration-300 ease-in-out z-50 overflow-y-auto ring-1 ring-black/5">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-pkmn-blue">{event.name || 'Detalhes do Evento'}</h2>

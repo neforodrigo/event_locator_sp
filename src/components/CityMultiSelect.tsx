@@ -28,12 +28,12 @@ export function CityMultiSelect({ cities, allCities, selectedCities, onChange }:
       : `${selectedCities.length} Cidades Selecionadas`;
 
   const labelClass = allCities
-    ? 'truncate block w-full pr-2 font-normal text-gray-700'
+    ? 'truncate block w-full pr-2 font-semibold text-pkmn-ink'
     : 'truncate block w-full pr-2 font-bold text-pkmn-blue';
 
   return (
     <div className="relative" ref={wrapperRef}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Cidade</label>
+      <label className="block text-xs font-semibold text-pkmn-ink mb-1.5">Cidade</label>
       <button
         id="city-filter-btn"
         type="button"
@@ -41,7 +41,7 @@ export function CityMultiSelect({ cities, allCities, selectedCities, onChange }:
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="w-full text-left px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-pkmn-red focus:border-pkmn-red transition flex justify-between items-center text-sm h-[42px]"
+        className="w-full text-left px-3 border border-slate-200/90 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-pkmn-gold/50 focus:border-pkmn-gold transition flex justify-between items-center text-sm h-11 font-semibold"
       >
         <span className={labelClass}>{label}</span>
         <svg className="w-4 h-4 ml-1 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

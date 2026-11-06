@@ -28,22 +28,22 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
   const buttonClass =
-    'min-w-9 px-3 py-1.5 rounded-lg border text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed';
+    'min-w-9 px-3 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
     <nav
       aria-label="Paginação"
       className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3"
     >
-      <p className="text-sm text-gray-600">
-        Mostrando <span className="font-bold text-pkmn-blue">{start}–{end}</span> de{' '}
-        <span className="font-bold text-pkmn-blue">{total}</span>
+      <p className="text-sm text-pkmn-muted">
+        Mostrando <span className="font-medium text-pkmn-ink">{start}–{end}</span> de{' '}
+        <span className="font-medium text-pkmn-ink">{total}</span>
       </p>
       {pageCount > 1 && (
         <div className="flex flex-wrap items-center justify-center gap-1">
           <button
             type="button"
-            className={`${buttonClass} border-gray-300 bg-white text-gray-700 hover:border-pkmn-blue hover:text-pkmn-blue`}
+            className={`${buttonClass} text-pkmn-ink hover:bg-white/70`}
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
           >
@@ -61,8 +61,8 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
                 aria-current={item === page ? 'page' : undefined}
                 className={`${buttonClass} ${
                   item === page
-                    ? 'border-pkmn-blue bg-pkmn-blue text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-pkmn-blue hover:text-pkmn-blue'
+                    ? 'bg-pkmn-blue text-pkmn-gold'
+                    : 'text-pkmn-ink hover:bg-white/70'
                 }`}
                 onClick={() => onPageChange(item)}
               >
@@ -72,7 +72,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           )}
           <button
             type="button"
-            className={`${buttonClass} border-gray-300 bg-white text-gray-700 hover:border-pkmn-blue hover:text-pkmn-blue`}
+            className={`${buttonClass} text-pkmn-ink hover:bg-white/70`}
             onClick={() => onPageChange(page + 1)}
             disabled={page >= pageCount}
           >
