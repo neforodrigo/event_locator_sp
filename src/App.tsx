@@ -16,6 +16,7 @@ import { ExportModal } from './components/ExportModal';
 import { WelcomeModal } from './components/WelcomeModal';
 import { SavedDisclaimer } from './components/SavedDisclaimer';
 import { Pagination } from './components/Pagination';
+import { InstallApp } from './components/InstallApp';
 
 export default function App() {
   const { events, loading, error, reload } = useEvents();
@@ -112,6 +113,7 @@ export default function App() {
     <div className="app-shell text-pkmn-ink pb-20 min-h-screen relative overflow-hidden">
       <div className="container mx-auto p-3 sm:p-5 md:p-8 relative z-10">
         <Header product={product} onProductChange={handleProductChange} />
+        <InstallApp />
         <main className="bg-pkmn-paper rounded-[28px] shadow-[0_18px_40px_rgba(4,18,52,0.28)] p-4 sm:p-6 md:p-7 relative">
           <ApiStatus error={error} onRetry={reload} />
           <Toolbar
