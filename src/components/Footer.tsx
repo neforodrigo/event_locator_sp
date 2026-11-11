@@ -1,3 +1,6 @@
+/** Temporarily hidden; set to true to show the Pólen TCG sponsor banner again. */
+const SHOW_POLEN_SPONSOR = false;
+
 export function Footer() {
   return (
     <footer className="mt-8 text-center text-sm text-pkmn-muted">
@@ -25,23 +28,25 @@ export function Footer() {
             por fornecer a API responsável por alimentar a página.
           </p>
         </div>
-        <div className="border-t border-black/5 pt-5 mt-4">
-          <a
-            href="https://www.polentcg.com.br/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex flex-col items-center gap-3 group"
-          >
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500 group-hover:text-pkmn-blue transition-colors">
-              Apoio Pólen TCG
-            </span>
-            <img
-              src="/polen-tcg.png"
-              alt="Pólen TCG — Card Games"
-              className="w-full max-w-md rounded-lg ring-1 ring-black/5 transition-transform group-hover:scale-[1.01]"
-            />
-          </a>
-        </div>
+        {SHOW_POLEN_SPONSOR && (
+          <div className="border-t border-black/5 pt-5 mt-4">
+            <a
+              href="https://www.polentcg.com.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex flex-col items-center gap-3 group"
+            >
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 group-hover:text-pkmn-blue transition-colors">
+                Apoio Pólen TCG
+              </span>
+              <img
+                src="/polen-tcg.png"
+                alt="Pólen TCG — Card Games"
+                className="w-full max-w-md rounded-lg ring-1 ring-black/5 transition-transform group-hover:scale-[1.01]"
+              />
+            </a>
+          </div>
+        )}
       </div>
     </footer>
   );
