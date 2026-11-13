@@ -1,5 +1,5 @@
-/** Temporarily hidden; set to true to show the Pólen TCG sponsor banner again. */
-const SHOW_POLEN_SPONSOR = false;
+/** Set to false to hide the Pólen TCG sponsor banner. */
+const SHOW_POLEN_SPONSOR = true;
 
 export function Footer() {
   return (
